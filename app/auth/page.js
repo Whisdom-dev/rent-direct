@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { createClient } from "@supabase/supabase-js"
+import { supabase } from "@/lib/supabase/client"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -10,11 +10,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFrcWVmYnB5am5ydnN6ZmFnb3VzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA0MTc2MTAsImV4cCI6MjA2NTk5MzYxMH0.Q7utmdnRB-wyf7y8SLL1nEDoMghV7EBx7Om9Ff8MDXE",
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "https://akqefbpyjnrvszfagous.supabase.co",
-)
 
 export default function AuthPage() {
   const [email, setEmail] = useState("")
