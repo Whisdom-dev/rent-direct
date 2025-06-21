@@ -46,11 +46,11 @@ export default function PropertiesPage() {
       {/* Header */}
       <header className="bg-white shadow-sm border-b sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
+          <div className="flex flex-col sm:flex-row justify-between items-center h-auto sm:h-16 py-4 sm:py-0 space-y-4 sm:space-y-0">
             <Link href="/" className="flex items-center">
-                <h1 className="text-2xl font-bold text-gray-900">RentDirect</h1>
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-900">RentDirect</h1>
             </Link>
-            <div className="flex-1 max-w-md mx-auto">
+            <div className="flex-1 max-w-md mx-auto w-full sm:w-auto">
                 <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
                     <Input
@@ -62,9 +62,9 @@ export default function PropertiesPage() {
                     />
                 </div>
             </div>
-            <div className="flex items-center">
-                <Link href="/list-property">
-                    <Button>List Your Property</Button>
+            <div className="flex items-center w-full sm:w-auto">
+                <Link href="/list-property" className="w-full sm:w-auto">
+                    <Button className="w-full sm:w-auto">List Your Property</Button>
                 </Link>
             </div>
           </div>
@@ -72,14 +72,14 @@ export default function PropertiesPage() {
       </header>
 
       {/* Properties Grid */}
-      <main className="py-8">
+      <main className="py-6 sm:py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-3xl font-semibold text-gray-900">All Properties ({filteredProperties.length})</h2>
+            <h2 className="text-2xl sm:text-3xl font-semibold text-gray-900">All Properties ({filteredProperties.length})</h2>
           </div>
 
           {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
               {[...Array(8)].map((_, i) => (
                 <Card key={i} className="animate-pulse">
                   <div className="h-48 bg-gray-200 rounded-t-lg"></div>
@@ -91,15 +91,15 @@ export default function PropertiesPage() {
               ))}
             </div>
           ) : filteredProperties.length === 0 ? (
-            <div className="text-center py-16">
+            <div className="text-center py-12 sm:py-16">
               <div className="text-gray-400 mb-4">
-                <MapPin className="h-16 w-16 mx-auto" />
+                <MapPin className="h-12 w-12 sm:h-16 sm:w-16 mx-auto" />
               </div>
-              <h3 className="text-xl font-medium text-gray-900 mb-2">No properties found</h3>
-              <p className="text-gray-500">Try adjusting your search or check back later for new listings.</p>
+              <h3 className="text-lg sm:text-xl font-medium text-gray-900 mb-2">No properties found</h3>
+              <p className="text-sm sm:text-base text-gray-500">Try adjusting your search or check back later for new listings.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
               {filteredProperties.map((property) => (
                 <Card key={property.id} className="hover:shadow-lg transition-shadow">
                   <Link href={`/property/${property.id}`}>
@@ -112,7 +112,7 @@ export default function PropertiesPage() {
                       {property.available && <Badge className="absolute top-2 right-2 bg-green-500">Available</Badge>}
                     </div>
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-lg">{property.title}</CardTitle>
+                      <CardTitle className="text-base sm:text-lg">{property.title}</CardTitle>
                       <CardDescription className="flex items-center text-gray-600">
                         <MapPin className="h-4 w-4 mr-1" />
                         {property.location}
@@ -130,7 +130,7 @@ export default function PropertiesPage() {
                             {property.bathrooms} baths
                           </div>
                       </div>
-                      <div className="text-lg font-semibold text-green-600">
+                      <div className="text-base sm:text-lg font-semibold text-green-600">
                         ${property.rent}/month
                       </div>
                     </CardContent>

@@ -93,18 +93,18 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
+          <div className="flex flex-col sm:flex-row justify-between items-center h-auto sm:h-16 py-4 sm:py-0 space-y-4 sm:space-y-0">
             <div className="flex items-center">
-              <Link href="/" className="text-2xl font-bold text-gray-900">
+              <Link href="/" className="text-xl sm:text-2xl font-bold text-gray-900">
                 RentDirect
               </Link>
               <Badge variant="outline" className="ml-2">
                 {userType === "landlord" ? "Landlord" : "Tenant"}
               </Badge>
             </div>
-            <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-600">Welcome, {user?.user_metadata?.full_name || user?.email}</span>
-              <Button variant="outline" size="sm" onClick={handleSignOut}>
+            <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-4">
+              <span className="text-sm text-gray-600 text-center sm:text-left">Welcome, {user?.user_metadata?.full_name || user?.email}</span>
+              <Button variant="outline" size="sm" onClick={handleSignOut} className="w-full sm:w-auto">
                 Sign Out
               </Button>
             </div>
@@ -112,9 +112,9 @@ export default function DashboardPage() {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto py-6 sm:py-8 px-4 sm:px-6 lg:px-8">
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 mb-6">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="properties">My Properties</TabsTrigger>
             <TabsTrigger value="notifications">Notifications</TabsTrigger>
@@ -147,10 +147,14 @@ export default function DashboardPage() {
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Notifications</CardTitle>
+                  <Bell className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{notifications.length}</div>
-                  <p className="text-xs text-muted-foreground">Unread messages</p>
+                  <p className="text-xs text-muted-foreground">You have {notifications.length} unread notifications</p>
+                  <Link href="/dashboard/messages" passHref>
+                    <Button variant="outline" size="sm" className="mt-4 w-full sm:w-auto">View Messages</Button>
+                  </Link>
                 </CardContent>
               </Card>
             </div>
@@ -162,14 +166,14 @@ export default function DashboardPage() {
                   <CardDescription>Manage your rental business</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex space-x-4">
-                    <Link href="/list-property">
-                      <Button>
+                  <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
+                    <Link href="/list-property" className="w-full sm:w-auto">
+                      <Button className="w-full sm:w-auto">
                         <Plus className="h-4 w-4 mr-2" />
                         Add New Property
                       </Button>
                     </Link>
-                    <Button variant="outline">
+                    <Button variant="outline" className="w-full sm:w-auto">
                       <Bell className="h-4 w-4 mr-2" />
                       Send Exit Notification
                     </Button>
@@ -180,11 +184,11 @@ export default function DashboardPage() {
           </TabsContent>
 
           <TabsContent value="properties" className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold">My Properties</h2>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
+              <h2 className="text-xl sm:text-2xl font-bold">My Properties</h2>
               {userType === "landlord" && (
-                <Link href="/list-property">
-                  <Button>
+                <Link href="/list-property" className="w-full sm:w-auto">
+                  <Button className="w-full sm:w-auto">
                     <Plus className="h-4 w-4 mr-2" />
                     Add Property
                   </Button>

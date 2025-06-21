@@ -56,25 +56,26 @@ export default function HomePage() {
       {/* Header */}
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
+          <div className="flex flex-col sm:flex-row justify-between items-center h-auto sm:h-16 py-4 sm:py-0 space-y-4 sm:space-y-0">
             <div className="flex items-center">
-              <h1 className="text-2xl font-bold text-gray-900">RentDirect</h1>
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">RentDirect</h1>
               <Badge variant="secondary" className="ml-2">
                 Beta
               </Badge>
             </div>
-            <div className="flex items-center space-x-4">
-              <Button variant="outline" size="sm">
+            <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-4">
+              <Button variant="outline" size="sm" className="w-full sm:w-auto">
                 <Bell className="h-4 w-4 mr-2" />
-                Notifications
+                <span className="hidden sm:inline">Notifications</span>
+                <span className="sm:hidden">Notify</span>
               </Button>
               {user ? (
-                <Link href="/dashboard">
-                  <Button size="sm">Dashboard</Button>
+                <Link href="/dashboard" className="w-full sm:w-auto">
+                  <Button size="sm" className="w-full sm:w-auto">Dashboard</Button>
                 </Link>
               ) : (
-                <Link href="/auth">
-                  <Button size="sm">Sign In</Button>
+                <Link href="/auth" className="w-full sm:w-auto">
+                  <Button size="sm" className="w-full sm:w-auto">Sign In</Button>
                 </Link>
               )}
             </div>
@@ -83,22 +84,22 @@ export default function HomePage() {
       </header>
 
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-16">
+      <section className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-12 sm:py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-4xl font-bold mb-4">Connect Directly with Landlords & Tenants</h2>
-          <p className="text-xl mb-8 opacity-90">No agents, no fees. Just direct connections for rental properties.</p>
-          <div className="flex justify-center space-x-4">
-            <Link href="/list-property">
-              <Button size="lg" variant="secondary">
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4">Connect Directly with Landlords & Tenants</h2>
+          <p className="text-lg sm:text-xl mb-8 opacity-90">No agents, no fees. Just direct connections for rental properties.</p>
+          <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
+            <Link href="/list-property" className="w-full sm:w-auto">
+              <Button size="lg" variant="secondary" className="w-full sm:w-auto">
                 <Plus className="h-5 w-5 mr-2" />
                 List Your Property
               </Button>
             </Link>
-            <Link href="/properties">
+            <Link href="/properties" className="w-full sm:w-auto">
               <Button
                 size="lg"
                 variant="outline"
-                className="bg-transparent border-white text-white hover:bg-white hover:text-blue-600"
+                className="w-full sm:w-auto bg-transparent border-white text-white hover:bg-white hover:text-blue-600"
               >
                 Browse Rentals
               </Button>
@@ -203,35 +204,35 @@ export default function HomePage() {
       </section>
 
       {/* Features Section */}
-      <section className="py-16 bg-white">
+      <section className="py-12 sm:py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h3 className="text-3xl font-bold text-gray-900 mb-4">Why Choose RentDirect?</h3>
-            <p className="text-lg text-gray-600">Cut out the middleman and connect directly</p>
+          <div className="text-center mb-8 sm:mb-12">
+            <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">Why Choose RentDirect?</h3>
+            <p className="text-base sm:text-lg text-gray-600">Cut out the middleman and connect directly</p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
             <div className="text-center">
-              <div className="bg-blue-100 rounded-full p-3 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                <DollarSign className="h-8 w-8 text-blue-600" />
+              <div className="bg-blue-100 rounded-full p-3 w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 flex items-center justify-center">
+                <DollarSign className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600" />
               </div>
-              <h4 className="text-xl font-semibold mb-2">No Agent Fees</h4>
-              <p className="text-gray-600">Save money by connecting directly with landlords and tenants.</p>
+              <h4 className="text-lg sm:text-xl font-semibold mb-2">No Agent Fees</h4>
+              <p className="text-sm sm:text-base text-gray-600">Save money by connecting directly with landlords and tenants.</p>
             </div>
             <div className="text-center">
-              <div className="bg-green-100 rounded-full p-3 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                <Bell className="h-8 w-8 text-green-600" />
+              <div className="bg-green-100 rounded-full p-3 w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 flex items-center justify-center">
+                <Bell className="h-6 w-6 sm:h-8 sm:w-8 text-green-600" />
               </div>
-              <h4 className="text-xl font-semibold mb-2">Exit Notifications</h4>
-              <p className="text-gray-600">
+              <h4 className="text-lg sm:text-xl font-semibold mb-2">Exit Notifications</h4>
+              <p className="text-sm sm:text-base text-gray-600">
                 Get notified when tenants are moving out of properties you're interested in.
               </p>
             </div>
-            <div className="text-center">
-              <div className="bg-purple-100 rounded-full p-3 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                <MapPin className="h-8 w-8 text-purple-600" />
+            <div className="text-center sm:col-span-2 lg:col-span-1">
+              <div className="bg-purple-100 rounded-full p-3 w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 flex items-center justify-center">
+                <MapPin className="h-6 w-6 sm:h-8 sm:w-8 text-purple-600" />
               </div>
-              <h4 className="text-xl font-semibold mb-2">Direct Contact</h4>
-              <p className="text-gray-600">Communicate directly with property owners and potential tenants.</p>
+              <h4 className="text-lg sm:text-xl font-semibold mb-2">Direct Contact</h4>
+              <p className="text-sm sm:text-base text-gray-600">Communicate directly with property owners and potential tenants.</p>
             </div>
           </div>
         </div>

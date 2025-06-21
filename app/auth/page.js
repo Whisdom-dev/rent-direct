@@ -93,18 +93,23 @@ export default function AuthPage() {
               <TabsContent value="signin">
                 <form onSubmit={handleSignIn} className="space-y-4">
                   <div>
-                    <Label htmlFor="email">Email</Label>
-                    <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                    <Label htmlFor="email-signin">Email</Label>
+                    <Input id="email-signin" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
                   </div>
                   <div>
-                    <Label htmlFor="password">Password</Label>
+                    <Label htmlFor="password-signin">Password</Label>
                     <Input
-                      id="password"
+                      id="password-signin"
                       type="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
                     />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <Link href="/forgot-password" passHref>
+                      <Button variant="link" className="text-sm px-0">Forgot password?</Button>
+                    </Link>
                   </div>
                   <Button type="submit" className="w-full" disabled={loading}>
                     {loading ? "Signing in..." : "Sign In"}
@@ -115,9 +120,9 @@ export default function AuthPage() {
               <TabsContent value="signup">
                 <form onSubmit={handleSignUp} className="space-y-4">
                   <div>
-                    <Label htmlFor="fullName">Full Name</Label>
+                    <Label htmlFor="fullName-signup">Full Name</Label>
                     <Input
-                      id="fullName"
+                      id="fullName-signup"
                       type="text"
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
@@ -125,13 +130,13 @@ export default function AuthPage() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="email">Email</Label>
-                    <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                    <Label htmlFor="email-signup">Email</Label>
+                    <Input id="email-signup" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
                   </div>
                   <div>
-                    <Label htmlFor="password">Password</Label>
+                    <Label htmlFor="password-signup">Password</Label>
                     <Input
-                      id="password"
+                      id="password-signup"
                       type="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
@@ -141,13 +146,13 @@ export default function AuthPage() {
                   <div>
                     <Label>I am a:</Label>
                     <RadioGroup value={userType} onValueChange={setUserType} className="mt-2">
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="tenant" id="tenant" />
-                        <Label htmlFor="tenant">Tenant (Looking for rental)</Label>
+                      <div className="flex items-start space-x-2">
+                        <RadioGroupItem value="tenant" id="tenant" className="mt-1" />
+                        <Label htmlFor="tenant" className="text-sm">Tenant (Looking for rental)</Label>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="landlord" id="landlord" />
-                        <Label htmlFor="landlord">Landlord (Have property to rent)</Label>
+                      <div className="flex items-start space-x-2">
+                        <RadioGroupItem value="landlord" id="landlord" className="mt-1" />
+                        <Label htmlFor="landlord" className="text-sm">Landlord (Have property to rent)</Label>
                       </div>
                     </RadioGroup>
                   </div>
