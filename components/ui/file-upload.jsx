@@ -22,7 +22,11 @@ export function FileUpload({ onUpload, isUploading }) {
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    accept: 'image/jpeg, image/png, image/gif',
+    accept: {
+      'image/jpeg': [],
+      'image/png': [],
+      'image/gif': []
+    },
     multiple: false,
   });
 

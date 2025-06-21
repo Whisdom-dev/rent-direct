@@ -50,11 +50,11 @@ export default function PropertyDetailPage() {
       }
       setProperty(propertyData);
 
-      if (propertyData.user_id) {
+      if (propertyData.landlord_id) {
         const { data: ownerData, error: ownerError } = await supabase
           .from('users')
           .select('id, name, avatar_url')
-          .eq('id', propertyData.user_id)
+          .eq('id', propertyData.landlord_id)
           .single();
         
         if (ownerError) throw ownerError;
@@ -74,7 +74,7 @@ export default function PropertyDetailPage() {
         router.push(`/auth?redirect=/property/${id}`);
         return;
     }
-    if(currentUser.id === property.user_id) {
+    if(currentUser.id === property.landlord_id) {
         alert("You cannot start a conversation with yourself.");
         return;
     }
@@ -84,7 +84,7 @@ export default function PropertyDetailPage() {
         let { data: existingConversation, error: existingError } = await supabase
             .from('conversations')
             .select('id')
-            .or(`(user1_id.eq.${currentUser.id},user2_id.eq.${property.user_id}),(user1_id.eq.${property.user_id},user2_id.eq.${currentUser.id})`)
+            .or(`(user1_id.eq.${currentUser.id},user2_id.eq.${property.landlord_id}),(user1_id.eq.${property.landlord_id},user2_id.eq.${currentUser.id})`)
             .eq('property_id', property.id)
             .maybeSingle();
 
@@ -99,7 +99,7 @@ export default function PropertyDetailPage() {
                 .insert({
                     property_id: property.id,
                     user1_id: currentUser.id, // Renter
-                    user2_id: property.user_id, // Owner
+                    user2_id: property.landlord_id, // Owner
                 })
                 .select()
                 .single();

@@ -71,6 +71,47 @@ export default function DashboardPage() {
     router.push("/")
   }
 
+  const handleDeleteProperty = async (propertyId, imageUrl) => {
+    // Confirm with the user before deleting
+    if (!window.confirm("Are you sure you want to delete this property? This action cannot be undone.")) {
+      return;
+    }
+
+    try {
+      // 1. Delete the image from storage if it exists
+      if (imageUrl) {
+        const urlParts = imageUrl.split('/');
+        // The file path is the last part of the URL after the bucket name
+        const filePath = urlParts.slice(urlParts.indexOf('properties') + 1).join('/');
+        
+        const { error: storageError } = await supabase.storage
+          .from('properties')
+          .remove([`property-images/${filePath.split('/').pop()}`]); // Reconstruct path precisely
+
+        if (storageError) {
+          console.error("Error deleting image from storage:", storageError);
+          // Don't block UI on storage error, but log it. The db record is more important.
+        }
+      }
+
+      // 2. Delete the property record from the database
+      const { error: dbError } = await supabase
+        .from("properties")
+        .delete()
+        .eq("id", propertyId);
+
+      if (dbError) throw dbError;
+
+      // 3. Update the UI by removing the deleted property from the state
+      setProperties((prev) => prev.filter((p) => p.id !== propertyId));
+      alert("Property deleted successfully.");
+
+    } catch (error) {
+      console.error("Error deleting property:", error);
+      alert("An error occurred while deleting the property. Please try again.");
+    }
+  };
+
   const markAsUnavailable = async (propertyId) => {
     try {
       const { error } = await supabase.from("properties").update({ available: false }).eq("id", propertyId)
@@ -249,22 +290,32 @@ export default function DashboardPage() {
                           {property.rent}/month
                         </div>
                       </div>
-                      <div className="flex space-x-2">
-                        <Button size="sm" variant="outline" className="flex-1">
-                          <Eye className="h-4 w-4 mr-1" />
-                          View
-                        </Button>
-                        {property.available && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => markAsUnavailable(property.id)}
-                            className="flex-1"
-                          >
-                            Mark Rented
+                      <div className="flex space-x-2 mt-4">
+                        <Link href={`/property/${property.id}`} className="flex-1">
+                          <Button size="sm" variant="outline" className="w-full">
+                            <Eye className="h-4 w-4 mr-1" />
+                            View
                           </Button>
-                        )}
+                        </Link>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => handleDeleteProperty(property.id, property.image_url)}
+                          className="flex-1"
+                        >
+                          Delete
+                        </Button>
                       </div>
+                      {property.available && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => markAsUnavailable(property.id)}
+                          className="w-full mt-2"
+                        >
+                          Mark as Rented
+                        </Button>
+                      )}
                     </CardContent>
                   </Card>
                 ))}

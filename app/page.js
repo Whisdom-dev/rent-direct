@@ -64,10 +64,14 @@ export default function HomePage() {
               </Badge>
             </div>
             <div className="flex items-center space-x-2">
-              <Button variant="outline" size="sm">
-                <Bell className="h-4 w-4 sm:mr-2" />
-                <span className="hidden sm:inline">Notifications</span>
-              </Button>
+              <Link href="/dashboard/messages">
+                <Button variant="outline" size="sm" asChild>
+                  <div>
+                    <Bell className="h-4 w-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Notifications</span>
+                  </div>
+                </Button>
+              </Link>
               {user ? (
                 <Link href="/dashboard">
                   <Button size="sm">Dashboard</Button>

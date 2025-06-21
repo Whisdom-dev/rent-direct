@@ -57,21 +57,31 @@ export default function ListPropertyPage() {
         const fileName = `${Date.now()}.${fileExt}`;
         const filePath = `property-images/${fileName}`;
 
-        const { error: uploadError } = await supabase.storage
+        const { data: uploadData, error: uploadError } = await supabase.storage
             .from('properties')
             .upload(filePath, imageFile);
 
-        if (uploadError) throw uploadError;
+        if (uploadError) {
+          throw new Error(`Supabase upload error: ${uploadError.message}`);
+        }
 
-        const { data: { publicUrl } } = supabase.storage
+        if (!uploadData || !uploadData.path) {
+          throw new Error("Upload succeeded but did not return a valid path.");
+        }
+
+        const { data: urlData } = supabase.storage
             .from('properties')
-            .getPublicUrl(filePath);
+            .getPublicUrl(uploadData.path);
             
-        return publicUrl;
+        if (!urlData || !urlData.publicUrl) {
+            throw new Error("Could not get public URL for the uploaded image.");
+        }
+
+        return urlData.publicUrl;
 
     } catch (error) {
-        console.error("Error uploading image:", error);
-        alert("Failed to upload image. Please try again.");
+        console.error("A critical error occurred in handleImageUpload:", error);
+        alert(`Image upload failed: ${error.message}`);
         return null;
     } finally {
         setIsUploading(false);
@@ -94,24 +104,44 @@ export default function ListPropertyPage() {
     }
 
     try {
-      const { data, error } = await supabase.from("properties").insert([
-        {
-          ...formData,
-          rent: Number.parseInt(formData.rent),
-          bedrooms: Number.parseInt(formData.bedrooms),
-          bathrooms: Number.parseInt(formData.bathrooms),
-          user_id: user.id, // Corrected column name
-          available: true,
-          image_url: imageUrl,
-        },
-      ]).select().single();
+      const parsedRent = Number.parseInt(formData.rent, 10);
+      const parsedBedrooms = Number.parseInt(formData.bedrooms, 10);
+      const parsedBathrooms = Number.parseInt(formData.bathrooms, 10);
 
-      if (error) throw error
+      // Add validation to check for NaN, which happens if fields are empty
+      if (isNaN(parsedRent) || isNaN(parsedBedrooms) || isNaN(parsedBathrooms)) {
+          console.error("Form data is invalid. One of the number fields could not be parsed.", { formData });
+          alert("Please ensure Rent, Bedrooms, and Bathrooms are valid numbers.");
+          setLoading(false);
+          return;
+      }
+
+      // Add detailed logging to see the exact data before insertion
+      const propertyDataToInsert = {
+        ...formData,
+        rent: parsedRent,
+        bedrooms: parsedBedrooms,
+        bathrooms: parsedBathrooms,
+        landlord_id: user.id,
+        available: true,
+        image_url: imageUrl,
+      };
+
+      console.log("Attempting to create property with this data:", propertyDataToInsert);
+
+      const { data, error } = await supabase.from("properties").insert([propertyDataToInsert]).select().single();
+
+      if (error) {
+        // This will give us the detailed Supabase error instead of a generic one
+        console.error("Error creating property in Supabase:", error);
+        throw error;
+      }
 
       router.push(`/property/${data.id}`);
     } catch (error) {
-      console.error("Error creating property:", error)
-      alert("Error creating property. Please try again.")
+      // This will catch the error thrown above and display a more helpful alert
+      console.error("Caught an error during property submission:", error)
+      alert(`Error creating property. Please check the browser's developer console for details. (Error: ${error.message})`)
     } finally {
       setLoading(false)
     }
@@ -224,7 +254,7 @@ export default function ListPropertyPage() {
                 <Select
                   required
                   value={formData.property_type}
-                  onValue-change={(value) => handleInputChange("property_type", value)}
+                  onValueChange={(value) => handleInputChange("property_type", value)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select property type" />

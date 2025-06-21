@@ -45,11 +45,11 @@ export default function PropertyDetailPage() {
       }
       setProperty(propertyData);
 
-      if (propertyData.user_id) {
+      if (propertyData.landlord_id) {
         const { data: ownerData, error: ownerError } = await supabase
           .from('users')
           .select('id, name, avatar_url')
-          .eq('id', propertyData.user_id)
+          .eq('id', propertyData.landlord_id)
           .single();
         
         if (ownerError) throw ownerError;
@@ -69,12 +69,12 @@ export default function PropertyDetailPage() {
         router.push(`/auth?redirect=/property/${id}`);
         return;
     }
-    if(currentUser.id === property.user_id) {
+    if(currentUser.id === property.landlord_id) {
         alert("You cannot start a conversation with yourself.");
         return;
     }
 
-    if (!property.user_id) {
+    if (!property.landlord_id) {
         console.error("This property does not have an owner associated with it.");
         alert("Cannot start a conversation: This property has no owner.");
         return;
@@ -84,7 +84,7 @@ export default function PropertyDetailPage() {
         console.log("Attempting to start conversation with IDs:", {
             propertyId: property.id,
             currentUserId: currentUser.id,
-            ownerId: property.user_id
+            ownerId: property.landlord_id
         });
         // More robustly check for an existing conversation in either direction.
         const { data: conversation1, error: error1 } = await supabase
@@ -93,7 +93,7 @@ export default function PropertyDetailPage() {
             .match({ 
                 property_id: property.id, 
                 user1_id: currentUser.id, 
-                user2_id: property.user_id 
+                user2_id: property.landlord_id 
             })
             .maybeSingle();
 
@@ -110,7 +110,7 @@ export default function PropertyDetailPage() {
             .select('id')
             .match({
                 property_id: property.id,
-                user1_id: property.user_id,
+                user1_id: property.landlord_id,
                 user2_id: currentUser.id
             })
             .maybeSingle();
@@ -129,7 +129,7 @@ export default function PropertyDetailPage() {
             .insert({
                 property_id: property.id,
                 user1_id: currentUser.id, // Renter
-                user2_id: property.user_id, // Owner
+                user2_id: property.landlord_id, // Owner
             })
             .select()
             .single();
@@ -202,11 +202,15 @@ export default function PropertyDetailPage() {
                 <Card>
                     <CardHeader>
                         <img 
-                            src={property.image_url || '/placeholder.svg'} 
+                            src={property.image_url} 
                             alt={property.title}
-                            className="w-full h-96 object-cover rounded-lg mb-4"
+                            className="w-full h-96 object-cover rounded-lg mb-4 bg-gray-100"
+                            onError={(e) => { e.currentTarget.src = '/placeholder.svg'; }}
                         />
-                        <div className="flex justify-between items-start">
+                        <a href={property.image_url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 underline break-all">
+                          Debug: Click to open image in new tab
+                        </a>
+                        <div className="flex justify-between items-start mt-4">
                             <div>
                                 <CardTitle className="text-3xl font-bold">{property.title}</CardTitle>
                                 <CardDescription className="flex items-center text-lg text-gray-600 mt-2">
@@ -249,11 +253,11 @@ export default function PropertyDetailPage() {
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <Button className="w-full text-lg" size="lg" onClick={handleContactOwner} disabled={!property.available || !property.user_id}>
+                        <Button className="w-full text-lg" size="lg" onClick={handleContactOwner} disabled={!property.available || !property.landlord_id}>
                            <MessageSquare className="h-5 w-5 mr-2"/> Contact Owner
                         </Button>
                         <p className="text-xs text-center text-gray-500 mt-2">
-                            {!property.user_id ? "This property has no owner." : "Directly message the property owner."}
+                            {!property.landlord_id ? "This property has no owner." : "Directly message the property owner."}
                         </p>
                     </CardContent>
                 </Card>

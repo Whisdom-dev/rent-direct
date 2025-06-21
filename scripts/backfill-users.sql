@@ -1,16 +1,21 @@
- -- scripts/backfill-users.sql
+-- Create a new public storage bucket for property images if it doesn't exist.
+-- 'public: true' means files are accessible via a URL without a token.
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('properties', 'properties', true)
+ON CONFLICT (id) DO NOTHING;
 
--- This script will backfill the public.users table with any users that
--- exist in auth.users but are missing from public.users.
--- This is useful for existing users that were created before the
--- handle_new_user trigger was implemented.
 
-INSERT INTO public.users (id, name, avatar_url)
-SELECT
-    id,
-    raw_user_meta_data->>'full_name',
-    raw_user_meta_data->>'avatar_url'
-FROM
-    auth.users
-WHERE
-    id NOT IN (SELECT id FROM public.users);
+-- RLS Policy: Allow any authenticated user to upload an image.
+-- This is a common starting point. You could make this more restrictive later
+-- by only allowing users with a "landlord" role, for example.
+CREATE POLICY "Authenticated users can upload property images."
+    ON storage.objects FOR INSERT
+    TO authenticated
+    WITH CHECK ( bucket_id = 'properties' );
+
+
+-- RLS Policy: Allow anyone to view images.
+-- This is necessary so that your website can display the property images to all visitors.
+CREATE POLICY "Anyone can view property images."
+    ON storage.objects FOR SELECT
+    USING ( bucket_id = 'properties' );
