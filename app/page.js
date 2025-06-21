@@ -56,26 +56,25 @@ export default function HomePage() {
       {/* Header */}
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col sm:flex-row justify-between items-center h-auto sm:h-16 py-4 sm:py-0 space-y-4 sm:space-y-0">
+          <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <h1 className="text-xl sm:text-2xl font-bold text-gray-900">RentDirect</h1>
               <Badge variant="secondary" className="ml-2">
                 Beta
               </Badge>
             </div>
-            <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-4">
-              <Button variant="outline" size="sm" className="w-full sm:w-auto">
-                <Bell className="h-4 w-4 mr-2" />
+            <div className="flex items-center space-x-2">
+              <Button variant="outline" size="sm">
+                <Bell className="h-4 w-4 sm:mr-2" />
                 <span className="hidden sm:inline">Notifications</span>
-                <span className="sm:hidden">Notify</span>
               </Button>
               {user ? (
-                <Link href="/dashboard" className="w-full sm:w-auto">
-                  <Button size="sm" className="w-full sm:w-auto">Dashboard</Button>
+                <Link href="/dashboard">
+                  <Button size="sm">Dashboard</Button>
                 </Link>
               ) : (
-                <Link href="/auth" className="w-full sm:w-auto">
-                  <Button size="sm" className="w-full sm:w-auto">Sign In</Button>
+                <Link href="/auth">
+                  <Button size="sm">Sign In</Button>
                 </Link>
               )}
             </div>
