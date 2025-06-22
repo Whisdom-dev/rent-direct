@@ -28,6 +28,22 @@ export default function FAQPage() {
         {
             question: "How does the direct rental process work?",
             answer: "Our platform facilitates direct communication between tenants and landlords. This means you can discuss terms, schedule viewings, and sign agreements without the need for a real estate agent, saving both time and money."
+        },
+        {
+          question: "Why do landlords need to be verified?",
+          answer: "Landlord verification is a crucial step to ensure the safety and security of our community. It helps us confirm that landlords are who they say they are, which protects tenants from potential scams and ensures all listings are legitimate."
+        },
+        {
+            question: "What are the different verification levels?",
+            answer: "We offer two levels of verification for landlords. 'Basic Verified' allows you to list up to two properties and is a quick process. 'Fully Verified' requires document submission and allows you to list unlimited properties, offering the highest level of trust to potential tenants."
+        },
+        {
+            question: "What documents do I need for Full Verification?",
+            answer: "For Full Verification, you will typically need to provide a government-issued ID, a document proving ownership of the property (like a deed or title), and a recent utility bill for proof of address. All documents are handled securely."
+        },
+        {
+            question: "How long does verification take?",
+            answer: "Basic verification is usually instant. Full verification, which involves a manual review of your documents, typically takes 2-3 business days. You will receive a notification on your dashboard once the process is complete."
         }
     ];
 

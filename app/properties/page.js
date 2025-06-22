@@ -1,29 +1,90 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
+import dynamic from 'next/dynamic'
 import { supabase } from "@/lib/supabase/client"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { MapPin, Bed, Bath, DollarSign, Search } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Slider } from "@/components/ui/slider"
+import { Label } from "@/components/ui/label"
+import { MapPin, Bed, Bath, Search, SlidersHorizontal, List, Map } from "lucide-react"
 import Link from "next/link"
+import { useDebounce } from "@/hooks/use-debounce"
+
+// Dynamically import the map component to ensure it's only rendered on the client side
+const PropertiesMap = dynamic(() => import('@/components/PropertiesMap'), { 
+    ssr: false,
+    loading: () => <div className="h-full w-full bg-gray-200 animate-pulse" />
+});
 
 export default function PropertiesPage() {
   const [properties, setProperties] = useState([])
-  const [searchTerm, setSearchTerm] = useState("")
   const [loading, setLoading] = useState(true)
+  const [viewMode, setViewMode] = useState('list'); // 'list' or 'map'
 
-  useEffect(() => {
-    fetchProperties()
-  }, [])
+  const [searchTerm, setSearchTerm] = useState("")
+  const [filters, setFilters] = useState({
+    property_type: "all",
+    amenities: [],
+    price_range: [0, 2000000],
+    bedrooms: "any",
+    bathrooms: "any",
+  })
 
-  const fetchProperties = async () => {
+  const debouncedSearchTerm = useDebounce(searchTerm, 300)
+
+  const handleFilterChange = (filterName, value) => {
+    setFilters(prev => ({ ...prev, [filterName]: value }))
+  }
+
+  const handleAmenityChange = (amenity) => {
+    handleFilterChange(
+      "amenities",
+      filters.amenities.includes(amenity)
+        ? filters.amenities.filter(a => a !== amenity)
+        : [...filters.amenities, amenity]
+    )
+  }
+
+  const fetchProperties = useCallback(async () => {
+    setLoading(true)
     try {
-      const { data, error } = await supabase
-        .from("properties")
-        .select("*")
-        .order("created_at", { ascending: false })
+      let query = supabase.from("properties").select("*")
+
+      // Text search
+      if (debouncedSearchTerm) {
+        query = query.textSearch("title", debouncedSearchTerm, { type: "websearch" })
+      }
+
+      // Property type filter
+      if (filters.property_type !== "all") {
+        query = query.eq("property_type", filters.property_type)
+      }
+
+      // Amenities filter
+      if (filters.amenities.length > 0) {
+        query = query.contains("amenities", filters.amenities)
+      }
+
+      // Price range filter
+      query = query.gte("rent", filters.price_range[0])
+      query = query.lte("rent", filters.price_range[1])
+      
+      // Bedrooms filter
+      if (filters.bedrooms !== 'any') {
+        query = query.eq('bedrooms', parseInt(filters.bedrooms));
+      }
+
+      // Bathrooms filter
+      if (filters.bathrooms !== 'any') {
+          query = query.eq('bathrooms', parseInt(filters.bathrooms));
+      }
+
+      const { data, error } = await query.order("created_at", { ascending: false })
 
       if (error) throw error
       setProperties(data || [])
@@ -32,111 +93,197 @@ export default function PropertiesPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [debouncedSearchTerm, filters])
 
-  const filteredProperties = properties.filter(
-    (property) =>
-      property.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      property.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      property.description?.toLowerCase().includes(searchTerm.toLowerCase()),
-  )
+  useEffect(() => {
+    fetchProperties()
+  }, [fetchProperties])
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <header className="bg-white shadow-sm border-b sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col sm:flex-row justify-between items-center h-auto sm:h-16 py-4 sm:py-0 space-y-4 sm:space-y-0">
-            <Link href="/" className="flex items-center">
-                <h1 className="text-xl sm:text-2xl font-bold text-gray-900">RentDirect</h1>
+          <div className="flex items-center justify-between h-16">
+            <Link href="/" className="text-xl sm:text-2xl font-bold text-gray-900">
+              RentDirect
             </Link>
-            <div className="flex-1 max-w-md mx-auto w-full sm:w-auto">
-                <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                    <Input
-                    type="text"
-                    placeholder="Search by location, property type..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 pr-4 py-3 w-full"
-                    />
-                </div>
+            <div className="flex-1 max-w-md mx-auto">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
+                <Input
+                  type="text"
+                  placeholder="Search by keyword..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 pr-4 py-2 w-full"
+                />
+              </div>
             </div>
-            <div className="flex items-center w-full sm:w-auto">
-                <Link href="/list-property" className="w-full sm:w-auto">
-                    <Button className="w-full sm:w-auto">List Your Property</Button>
-                </Link>
+            <div className="hidden md:flex items-center">
+              <Link href="/list-property">
+                <Button>List Your Property</Button>
+              </Link>
             </div>
           </div>
         </div>
       </header>
 
-      {/* Properties Grid */}
-      <main className="py-6 sm:py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <main className="flex">
+        {/* Filters Sidebar */}
+        <aside className="hidden lg:block w-1/4 xl:w-1/5 p-6 bg-white border-r space-y-8 sticky top-16 h-screen-minus-header">
+            <h3 className="text-lg font-semibold flex items-center">
+                <SlidersHorizontal className="h-5 w-5 mr-2" />
+                Filters
+            </h3>
+
+            {/* Price Range */}
+            <div className="space-y-4">
+                <Label>Price Range (₦{filters.price_range[0].toLocaleString()} - ₦{filters.price_range[1].toLocaleString()})</Label>
+                <Slider
+                    min={0}
+                    max={2000000}
+                    step={50000}
+                    value={filters.price_range}
+                    onValueChange={(value) => handleFilterChange('price_range', value)}
+                />
+            </div>
+
+            {/* Property Type */}
+            <div className="space-y-2">
+                <Label>Property Type</Label>
+                <Select value={filters.property_type} onValueChange={(value) => handleFilterChange('property_type', value)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All Types</SelectItem>
+                        <SelectItem value="Apartment">Apartment</SelectItem>
+                        <SelectItem value="House">House</SelectItem>
+                        <SelectItem value="Duplex">Duplex</SelectItem>
+                        <SelectItem value="Bungalow">Bungalow</SelectItem>
+                        <SelectItem value="Townhouse">Townhouse</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
+
+            {/* Bedrooms & Bathrooms */}
+            <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <Label>Bedrooms</Label>
+                    <Select value={filters.bedrooms} onValueChange={(value) => handleFilterChange('bedrooms', value)}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="any">Any</SelectItem>
+                            {[1, 2, 3, 4, 5].map(n => <SelectItem key={n} value={String(n)}>{n} Bed{n > 1 ? 's' : ''}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div className="space-y-2">
+                    <Label>Bathrooms</Label>
+                     <Select value={filters.bathrooms} onValueChange={(value) => handleFilterChange('bathrooms', value)}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="any">Any</SelectItem>
+                            {[1, 2, 3, 4, 5].map(n => <SelectItem key={n} value={String(n)}>{n} Bath{n > 1 ? 's' : ''}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                </div>
+            </div>
+
+            {/* Amenities */}
+            <div className="space-y-3">
+                <Label>Amenities</Label>
+                <div className="space-y-2">
+                {['Parking', 'Pet-Friendly', 'Furnished', 'Swimming Pool', 'Air Conditioning', 'Security'].map(amenity => (
+                    <div key={amenity} className="flex items-center space-x-2">
+                        <Checkbox id={amenity} checked={filters.amenities.includes(amenity)} onCheckedChange={() => handleAmenityChange(amenity)} />
+                        <Label htmlFor={amenity} className="font-normal">{amenity}</Label>
+                    </div>
+                ))}
+                </div>
+            </div>
+        </aside>
+
+        {/* Properties Grid */}
+        <div className="w-full lg:w-3/4 xl:w-4/5 p-6">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl sm:text-3xl font-semibold text-gray-900">All Properties ({filteredProperties.length})</h2>
+            <h2 className="text-2xl font-semibold text-gray-900">All Properties ({properties.length})</h2>
+            <div className="hidden sm:flex items-center gap-2">
+                <Button variant={viewMode === 'list' ? 'default' : 'outline'} size="sm" onClick={() => setViewMode('list')}>
+                    <List className="h-4 w-4 mr-2" />
+                    List
+                </Button>
+                <Button variant={viewMode === 'map' ? 'default' : 'outline'} size="sm" onClick={() => setViewMode('map')}>
+                    <Map className="h-4 w-4 mr-2" />
+                    Map
+                </Button>
+            </div>
           </div>
 
           {loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-              {[...Array(8)].map((_, i) => (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+              {[...Array(6)].map((_, i) => (
                 <Card key={i} className="animate-pulse">
                   <div className="h-48 bg-gray-200 rounded-t-lg"></div>
-                  <CardContent className="p-4">
-                    <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                  <CardContent className="p-4 space-y-2">
+                    <div className="h-4 bg-gray-200 rounded"></div>
                     <div className="h-4 bg-gray-200 rounded w-2/3"></div>
                   </CardContent>
                 </Card>
               ))}
             </div>
-          ) : filteredProperties.length === 0 ? (
-            <div className="text-center py-12 sm:py-16">
+          ) : properties.length === 0 ? (
+            <div className="text-center py-16">
               <div className="text-gray-400 mb-4">
-                <MapPin className="h-12 w-12 sm:h-16 sm:w-16 mx-auto" />
+                <MapPin className="h-16 w-16 mx-auto" />
               </div>
-              <h3 className="text-lg sm:text-xl font-medium text-gray-900 mb-2">No properties found</h3>
-              <p className="text-sm sm:text-base text-gray-500">Try adjusting your search or check back later for new listings.</p>
+              <h3 className="text-xl font-medium text-gray-900 mb-2">No properties found</h3>
+              <p className="text-gray-500">Try adjusting your filters or check back later for new listings.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-              {filteredProperties.map((property) => (
-                <Card key={property.id} className="hover:shadow-lg transition-shadow">
-                  <Link href={`/property/${property.id}`}>
-                    <div className="relative">
-                      <img
-                        src={property.image_url || "/placeholder.svg?height=200&width=300"}
-                        alt={property.title}
-                        className="w-full h-48 object-cover rounded-t-lg"
-                      />
-                      {property.available && <Badge className="absolute top-2 right-2 bg-green-500">Available</Badge>}
+            <div>
+                {viewMode === 'list' ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                        {properties.map((property) => (
+                            <Card key={property.id} className="hover:shadow-lg transition-shadow duration-200">
+                            <Link href={`/property/${property.id}`} className="block">
+                                <div className="relative">
+                                <img
+                                    src={property.image_url || "/placeholder.svg?height=200&width=300"}
+                                    alt={property.title}
+                                    className="w-full h-48 object-cover rounded-t-lg"
+                                />
+                                <Badge className={`absolute top-2 right-2 ${property.available ? 'bg-green-500' : 'bg-red-500'}`}>{property.available ? "Available" : "Rented"}</Badge>
+                                </div>
+                                <CardHeader className="pb-2">
+                                <CardTitle className="text-lg line-clamp-1">{property.title}</CardTitle>
+                                <CardDescription className="flex items-center text-gray-600">
+                                    <MapPin className="h-4 w-4 mr-1" />
+                                    {property.location}
+                                </CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                <div className="flex items-center justify-between text-sm text-gray-500 mb-3">
+                                    <div className="flex items-center">
+                                        <Bed className="h-4 w-4 mr-1" />
+                                        {property.bedrooms} beds
+                                    </div>
+                                    <div className="flex items-center">
+                                        <Bath className="h-4 w-4 mr-1" />
+                                        {property.bathrooms} baths
+                                    </div>
+                                </div>
+                                <div className="text-lg font-semibold text-green-600">
+                                    ₦{property.rent.toLocaleString()}/month
+                                </div>
+                                </CardContent>
+                            </Link>
+                            </Card>
+                        ))}
                     </div>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-base sm:text-lg">{property.title}</CardTitle>
-                      <CardDescription className="flex items-center text-gray-600">
-                        <MapPin className="h-4 w-4 mr-1" />
-                        {property.location}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-gray-600 text-sm mb-3 line-clamp-2">{property.description}</p>
-                      <div className="flex items-center justify-between text-sm text-gray-500 mb-3">
-                          <div className="flex items-center">
-                            <Bed className="h-4 w-4 mr-1" />
-                            {property.bedrooms} beds
-                          </div>
-                          <div className="flex items-center">
-                            <Bath className="h-4 w-4 mr-1" />
-                            {property.bathrooms} baths
-                          </div>
-                      </div>
-                      <div className="text-base sm:text-lg font-semibold text-green-600">
-                        ${property.rent}/month
-                      </div>
-                    </CardContent>
-                  </Link>
-                </Card>
-              ))}
+                ) : (
+                    <div className="h-[75vh] rounded-lg overflow-hidden">
+                        <PropertiesMap properties={properties} />
+                    </div>
+                )}
             </div>
           )}
         </div>

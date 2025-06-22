@@ -45,12 +45,14 @@ export default function MessagesPage() {
 
             if (error) throw error;
             
-            const processedConversations = data.map(convo => {
-                const otherUser = convo.participant.id === userId ? convo.owner : convo.participant;
-                const lastMessage = convo.messages[convo.messages.length - 1];
-                const unreadCount = convo.messages.filter(m => !m.is_read && m.sender_id !== userId).length;
-                return { ...convo, otherUser, lastMessage, unreadCount };
-            });
+            const processedConversations = data
+                .filter(convo => convo.owner && convo.participant)
+                .map(convo => {
+                    const otherUser = convo.participant.id === userId ? convo.owner : convo.participant;
+                    const lastMessage = convo.messages[convo.messages.length - 1];
+                    const unreadCount = convo.messages.filter(m => !m.is_read && m.sender_id !== userId).length;
+                    return { ...convo, otherUser, lastMessage, unreadCount };
+                });
 
             setConversations(processedConversations);
 

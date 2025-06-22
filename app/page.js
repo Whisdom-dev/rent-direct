@@ -190,8 +190,7 @@ export default function HomePage() {
                       </div>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center text-lg font-semibold text-green-600">
-                          <DollarSign className="h-5 w-5" />
-                          {property.rent}/month
+                          ₦{property.rent}/month
                         </div>
                         <Button size="sm" asChild>
                            <span className="cursor-pointer">View Details</span>

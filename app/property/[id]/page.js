@@ -1,13 +1,16 @@
 "use client"
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Bed, Bath, DollarSign, User, Calendar, ShieldCheck, MessageSquare } from 'lucide-react';
+import { MapPin, Bed, Bath, DollarSign, User, Calendar, ShieldCheck, MessageSquare, Star } from 'lucide-react';
 import Link from 'next/link';
+import StarRating from '@/components/StarRating';
+import LeaveReviewForm from '@/components/LeaveReviewForm';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 export default function PropertyDetailPage() {
   const router = useRouter();
@@ -16,22 +19,12 @@ export default function PropertyDetailPage() {
 
   const [property, setProperty] = useState(null);
   const [owner, setOwner] = useState(null);
+  const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
 
-  useEffect(() => {
-    const fetchCurrentUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setCurrentUser(user);
-    }
-    fetchCurrentUser();
-
-    if (id) {
-      fetchProperty();
-    }
-  }, [id]);
-
-  const fetchProperty = async () => {
+  const fetchPropertyAndReviews = useCallback(async () => {
+    if (!id) return;
     setLoading(true);
     try {
       const { data: propertyData, error: propertyError } = await supabase
@@ -46,23 +39,46 @@ export default function PropertyDetailPage() {
       setProperty(propertyData);
 
       if (propertyData.landlord_id) {
+        // Fetch owner details including new review fields
         const { data: ownerData, error: ownerError } = await supabase
-          .from('users')
-          .select('id, name, avatar_url')
+          .from('public_user_profiles')
+          .select('id, name, avatar_url, average_rating, review_count')
           .eq('id', propertyData.landlord_id)
           .single();
-        
         if (ownerError) throw ownerError;
         setOwner(ownerData);
+
+        // Fetch reviews for the owner
+        const { data: reviewsData, error: reviewsError } = await supabase
+            .from('reviews')
+            .select(`
+                id,
+                rating,
+                comment,
+                created_at,
+                reviewer:users!reviews_reviewer_id_fkey (id, name, avatar_url)
+            `)
+            .eq('reviewee_id', propertyData.landlord_id)
+            .order('created_at', { ascending: false });
+
+        if(reviewsError) throw reviewsError;
+        setReviews(reviewsData || []);
       }
     } catch (error) {
       console.error('Error fetching property details:', error);
-      // Optionally redirect to a 404 page
-      // router.push('/404');
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setCurrentUser(user);
+    }
+    fetchCurrentUser();
+    fetchPropertyAndReviews();
+  }, [id, fetchPropertyAndReviews]);
 
   const handleContactOwner = async () => {
     if (!currentUser) {
@@ -238,6 +254,59 @@ export default function PropertyDetailPage() {
                         <p className="text-gray-700 whitespace-pre-wrap">{property.description}</p>
                     </CardContent>
                 </Card>
+
+                {/* Reviews Section */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="text-2xl">Reviews for {owner?.name}</CardTitle>
+                        {owner && owner.review_count > 0 && (
+                             <div className="flex items-center gap-2 mt-2">
+                                <StarRating rating={owner.average_rating} />
+                                <span className="text-gray-600">
+                                    {owner.average_rating.toFixed(1)} ({owner.review_count} reviews)
+                                </span>
+                            </div>
+                        )}
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                        {/* Leave a review form */}
+                        {currentUser && currentUser.id !== owner?.id && (
+                            <div className="border-t pt-6">
+                                <h3 className="text-lg font-semibold mb-4">Leave a Review</h3>
+                                <LeaveReviewForm
+                                    propertyId={property.id}
+                                    landlordId={owner.id}
+                                    reviewerId={currentUser.id}
+                                    onReviewSubmitted={fetchPropertyAndReviews}
+                                />
+                            </div>
+                        )}
+
+                        {/* Existing Reviews */}
+                        <div className="space-y-4">
+                            {reviews.length > 0 ? (
+                                reviews.map(review => (
+                                    <div key={review.id} className="flex items-start space-x-4 border-t pt-4">
+                                        <Avatar>
+                                            <AvatarImage src={review.reviewer.avatar_url} />
+                                            <AvatarFallback>{review.reviewer.name?.charAt(0)}</AvatarFallback>
+                                        </Avatar>
+                                        <div className="flex-1">
+                                            <div className="flex justify-between items-center">
+                                                <span className="font-semibold">{review.reviewer.name}</span>
+                                                <span className="text-xs text-gray-500">{new Date(review.created_at).toLocaleDateString()}</span>
+                                            </div>
+                                            <StarRating rating={review.rating} size={14} className="my-1" />
+                                            <p className="text-gray-700">{review.comment}</p>
+                                        </div>
+                                    </div>
+                                ))
+                            ) : (
+                                <p className="text-gray-500 text-center py-4">This landlord has no reviews yet.</p>
+                            )}
+                        </div>
+                    </CardContent>
+                </Card>
             </div>
 
             <div className="md:col-span-1 space-y-6">
@@ -246,42 +315,50 @@ export default function PropertyDetailPage() {
                         <CardTitle className="flex items-center justify-between text-2xl">
                             Rent
                             <span className="flex items-center font-bold text-green-600">
-                                <DollarSign className="h-6 w-6" />
-                                {property.rent}
+                                ₦{property.rent}
                                 <span className="text-lg font-normal text-gray-500">/month</span>
                             </span>
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <Button className="w-full text-lg" size="lg" onClick={handleContactOwner} disabled={!property.available || !property.landlord_id}>
-                           <MessageSquare className="h-5 w-5 mr-2"/> Contact Owner
-                        </Button>
-                        <p className="text-xs text-center text-gray-500 mt-2">
-                            {!property.landlord_id ? "This property has no owner." : "Directly message the property owner."}
-                        </p>
-                    </CardContent>
-                </Card>
-                {owner && (
-                    <Card>
-                        <CardHeader className="flex flex-row items-center gap-4">
-                            <img src={owner.avatar_url || '/placeholder-user.jpg'} alt={owner.name} className="w-16 h-16 rounded-full"/>
-                            <div>
-                                <CardDescription>Property Owner</CardDescription>
-                                <CardTitle className="text-xl">{owner.name}</CardTitle>
+                        {owner ? (
+                            <div className="flex items-center space-x-4">
+                                <Avatar>
+                                    <AvatarImage src={owner.avatar_url} alt={owner.name} />
+                                    <AvatarFallback>{owner.name?.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                                <div>
+                                    <p className="font-bold text-lg">{owner.name}</p>
+                                    {owner.review_count > 0 && (
+                                        <div className="flex items-center gap-1 text-sm text-gray-600">
+                                            <StarRating rating={owner.average_rating} size={14} />
+                                            <span>{owner.average_rating.toFixed(1)} ({owner.review_count})</span>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
-                        </CardHeader>
-                    </Card>
-                )}
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Safety Tips</CardTitle>
-                    </CardHeader>
-                    <CardContent className="text-sm text-gray-600 space-y-2">
-                        <p className="flex items-start"><ShieldCheck className="h-4 w-4 mr-2 mt-1 text-green-500 flex-shrink-0"/> Always inspect the property in person.</p>
-                        <p className="flex items-start"><ShieldCheck className="h-4 w-4 mr-2 mt-1 text-green-500 flex-shrink-0"/> Never pay security deposits before signing a lease.</p>
-                        <p className="flex items-start"><ShieldCheck className="h-4 w-4 mr-2 mt-1 text-green-500 flex-shrink-0"/> All transactions should happen through the platform.</p>
+                        ) : (
+                            <div className="text-gray-500">Owner information not available.</div>
+                        )}
+                        <Button className="w-full mt-6" onClick={handleContactOwner}>
+                            <MessageSquare className="h-5 w-5 mr-2" />
+                            Contact Landlord
+                        </Button>
                     </CardContent>
                 </Card>
+
+                 <Card>
+                     <CardHeader>
+                        <CardTitle>Safety Tips</CardTitle>
+                     </CardHeader>
+                     <CardContent>
+                        <ul className="list-disc list-inside space-y-1 text-gray-700">
+                           <li>Check property documents</li>
+                           <li>Verify owner's identity</li>
+                           <li>Never pay in cash</li>
+                        </ul>
+                     </CardContent>
+                 </Card>
             </div>
         </div>
       </main>

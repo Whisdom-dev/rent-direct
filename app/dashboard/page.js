@@ -8,10 +8,13 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { Plus, MapPin, Bed, Bath, DollarSign, Eye, Bell } from "lucide-react"
+import { Plus, MapPin, Bed, Bath, Eye, Bell, Shield, AlertCircle, CheckCircle, Clock } from "lucide-react"
+import VerificationRequest from "@/components/VerificationRequest"
 
 export default function DashboardPage() {
   const [user, setUser] = useState(null)
+  const [userProfile, setUserProfile] = useState(null)
+  const [isAdmin, setIsAdmin] = useState(false)
   const [properties, setProperties] = useState([])
   const [notifications, setNotifications] = useState([])
   const [loading, setLoading] = useState(true)
@@ -35,6 +38,30 @@ export default function DashboardPage() {
 
   const fetchUserData = async (user) => {
     try {
+      // Fetch user profile with verification status
+      const { data: profileData, error: profileError } = await supabase
+        .from("users")
+        .select("*")
+        .eq("id", user.id)
+        .single()
+      
+      if (profileError) throw profileError
+      setUserProfile(profileData)
+
+      // Check if user is an admin
+      const { data: adminData, error: adminError } = await supabase
+        .from("admin_users")
+        .select("id")
+        .eq("id", user.id)
+        .single()
+
+      if (adminData) {
+        setIsAdmin(true)
+      } else if (adminError && adminError.code !== 'PGRST116') {
+        // Log error but don't block functionality (PGRST116 is "not found" which is expected)
+        console.warn("Admin check failed:", adminError)
+      }
+
       // Fetch user's properties if they're a landlord
       const { data: propertiesData } = await supabase
         .from("properties")
@@ -44,21 +71,18 @@ export default function DashboardPage() {
 
       setProperties(propertiesData || [])
 
-      // Fetch notifications (mock data for now)
-      setNotifications([
-        {
-          id: 1,
-          message: "New inquiry for your 2BR Downtown Apartment",
-          type: "inquiry",
-          created_at: new Date().toISOString(),
-        },
-        {
-          id: 2,
-          message: "Tenant marked exit notification for Sunset Villa",
-          type: "exit",
-          created_at: new Date().toISOString(),
-        },
-      ])
+      // Fetch real notifications
+      const { data: notificationsData, error: notificationsError } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (notificationsError) {
+        console.error("Error fetching notifications:", notificationsError);
+      } else {
+        setNotifications(notificationsData || []);
+      }
     } catch (error) {
       console.error("Error fetching user data:", error)
     } finally {
@@ -124,11 +148,61 @@ export default function DashboardPage() {
     }
   }
 
+  const getVerificationStatus = () => {
+    if (!userProfile?.verification_status || userProfile.verification_status === 'unverified') {
+      return {
+        status: 'unverified',
+        label: 'Unverified',
+        description: 'You need to verify your account to list properties',
+        icon: AlertCircle,
+        color: 'destructive'
+      }
+    }
+    
+    if (userProfile.verification_status === 'basic_verified') {
+      return {
+        status: 'basic',
+        label: 'Basic Verified',
+        description: 'You can list up to 2 properties',
+        icon: CheckCircle,
+        color: 'default'
+      }
+    }
+    
+    if (userProfile.verification_status === 'fully_verified') {
+      return {
+        status: 'full',
+        label: 'Fully Verified',
+        description: 'You can list unlimited properties',
+        icon: CheckCircle,
+        color: 'default'
+      }
+    }
+
+    return {
+      status: 'pending',
+      label: 'Pending Review',
+      description: 'Your verification is being reviewed',
+      icon: Clock,
+      color: 'secondary'
+    }
+  }
+
+  const canListProperties = () => {
+    const userType = user?.user_metadata?.user_type || "tenant"
+    const verificationInfo = getVerificationStatus()
+    
+    return userType === "landlord" && 
+           (verificationInfo.status === 'basic' || verificationInfo.status === 'full')
+  }
+
   if (loading) {
     return <div className="min-h-screen bg-gray-50 flex items-center justify-center">Loading...</div>
   }
 
   const userType = user?.user_metadata?.user_type || "tenant"
+  const verificationInfo = getVerificationStatus()
+  const StatusIcon = verificationInfo.icon
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -139,14 +213,27 @@ export default function DashboardPage() {
               <Link href="/" className="text-xl sm:text-2xl font-bold text-gray-900">
                 RentDirect
               </Link>
-              <Badge variant="outline" className="ml-2">
-                {userType === "landlord" ? "Landlord" : "Tenant"}
-              </Badge>
+              <div className="flex items-center gap-2 ml-2">
+                <Badge variant="outline">
+                  {userType === "landlord" ? "Landlord" : "Tenant"}
+                </Badge>
+                {userType === "landlord" && (
+                  <Badge variant={verificationInfo.color} className="flex items-center gap-1">
+                    <StatusIcon className="h-3 w-3" />
+                    {verificationInfo.label}
+                  </Badge>
+                )}
+              </div>
             </div>
             <div className="flex items-center space-x-4">
               <span className="hidden sm:inline text-sm text-gray-600">
                 Welcome, {user?.user_metadata?.full_name || user?.email}
               </span>
+              {isAdmin && (
+                <Link href="/admin/verification">
+                  <Button size="sm">Admin Panel</Button>
+                </Link>
+              )}
               <Button variant="outline" size="sm" onClick={handleSignOut}>
                 Sign Out
               </Button>
@@ -182,7 +269,7 @@ export default function DashboardPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
-                    ${properties.reduce((sum, p) => sum + (p.available ? 0 : p.rent), 0)}
+                    ₦{properties.reduce((sum, p) => sum + (p.available ? 0 : p.rent), 0)}
                   </div>
                   <p className="text-xs text-muted-foreground">From rented properties</p>
                 </CardContent>
@@ -202,34 +289,93 @@ export default function DashboardPage() {
               </Card>
             </div>
 
-            {userType === "landlord" && (
+            {isAdmin ? (
               <Card>
                 <CardHeader>
-                  <CardTitle>Quick Actions</CardTitle>
-                  <CardDescription>Manage your rental business</CardDescription>
+                  <CardTitle>Admin Actions</CardTitle>
+                  <CardDescription>Access the admin panel to manage the platform.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
-                    <Link href="/list-property" className="w-full sm:w-auto">
-                      <Button className="w-full sm:w-auto">
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add New Property
-                      </Button>
-                    </Link>
-                    <Button variant="outline" className="w-full sm:w-auto">
-                      <Bell className="h-4 w-4 mr-2" />
-                      Send Exit Notification
+                  <Link href="/admin/verification">
+                    <Button>
+                      <Shield className="h-4 w-4 mr-2" />
+                      Manage Verifications
                     </Button>
-                  </div>
+                  </Link>
                 </CardContent>
               </Card>
+            ) : userType === "landlord" && (
+              <>
+                {verificationInfo.status === 'unverified' && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Shield className="h-5 w-5" />
+                        Get Verified
+                      </CardTitle>
+                      <CardDescription>
+                        Complete verification to start listing your properties
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <VerificationRequest 
+                        user={userProfile} 
+                        onVerificationUpdate={() => fetchUserData(user)}
+                      />
+                    </CardContent>
+                  </Card>
+                )}
+
+                {canListProperties() && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Quick Actions</CardTitle>
+                      <CardDescription>Manage your rental business</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
+                        <Link href="/list-property" className="w-full sm:w-auto">
+                          <Button className="w-full sm:w-auto">
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add New Property
+                          </Button>
+                        </Link>
+                        <Button variant="outline" className="w-full sm:w-auto">
+                          <Bell className="h-4 w-4 mr-2" />
+                          Send Exit Notification
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {verificationInfo.status === 'pending' && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Clock className="h-5 w-5" />
+                        Verification in Progress
+                      </CardTitle>
+                      <CardDescription>
+                        Your verification request is being reviewed. This typically takes 2-3 business days.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex items-center gap-2 text-amber-600">
+                        <Clock className="h-4 w-4" />
+                        <span>Under Review</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </>
             )}
           </TabsContent>
 
           <TabsContent value="properties" className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
               <h2 className="text-xl sm:text-2xl font-bold">My Properties</h2>
-              {userType === "landlord" && (
+              {canListProperties() && (
                 <Link href="/list-property" className="w-full sm:w-auto">
                   <Button className="w-full sm:w-auto">
                     <Plus className="h-4 w-4 mr-2" />
@@ -243,7 +389,16 @@ export default function DashboardPage() {
               <Card>
                 <CardContent className="text-center py-8">
                   <p className="text-gray-500 mb-4">No properties listed yet</p>
-                  {userType === "landlord" && (
+                  {userType === "landlord" && !canListProperties() && (
+                    <div className="space-y-4">
+                      <p className="text-sm text-gray-600">You need to verify your account to list properties</p>
+                      <VerificationRequest 
+                        user={userProfile} 
+                        onVerificationUpdate={() => fetchUserData(user)}
+                      />
+                    </div>
+                  )}
+                  {canListProperties() && (
                     <Link href="/list-property">
                       <Button>List Your First Property</Button>
                     </Link>
@@ -286,8 +441,7 @@ export default function DashboardPage() {
                       </div>
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center text-lg font-semibold text-green-600">
-                          <DollarSign className="h-5 w-5" />
-                          {property.rent}/month
+                           ₦{property.rent}/month
                         </div>
                       </div>
                       <div className="flex space-x-2 mt-4">
@@ -330,7 +484,7 @@ export default function DashboardPage() {
               <Card>
                 <CardContent className="text-center py-8">
                   <Bell className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                  <p className="text-gray-500">No notifications yet</p>
+                  <p className="text-gray-500">No new notifications</p>
                 </CardContent>
               </Card>
             ) : (
@@ -342,11 +496,15 @@ export default function DashboardPage() {
                         <div className="flex items-start space-x-3">
                           <div
                             className={`p-2 rounded-full ${
+                              notification.type === "verification_approved" ? "bg-green-100" : 
+                              notification.type === "verification_rejected" ? "bg-red-100" :
                               notification.type === "inquiry" ? "bg-blue-100" : "bg-orange-100"
                             }`}
                           >
                             <Bell
                               className={`h-4 w-4 ${
+                                notification.type === "verification_approved" ? "text-green-600" : 
+                                notification.type === "verification_rejected" ? "text-red-600" :
                                 notification.type === "inquiry" ? "text-blue-600" : "text-orange-600"
                               }`}
                             />
