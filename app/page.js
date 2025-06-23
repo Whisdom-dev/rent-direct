@@ -161,7 +161,7 @@ export default function HomePage() {
                   <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer flex flex-col">
                     <div className="relative">
                       <img
-                        src={property.image_url || "/placeholder.svg?height=200&width=300"}
+                        src={property.image_url || "/placeholder-property-v2.jpg"}
                         alt={property.title}
                         className="w-full h-48 object-cover rounded-t-lg"
                       />

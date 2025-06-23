@@ -46,15 +46,17 @@ const PropertiesMap = ({ properties }) => {
                 >
                     <Popup>
                         <div className="w-48">
-                            <img src={property.image_url || '/placeholder.svg'} alt={property.title} className="h-24 w-full object-cover rounded-t-md" />
-                            <div className="p-2">
-                                <h3 className="font-bold text-sm truncate">{property.title}</h3>
-                                <p className="text-xs text-gray-600">{property.location}</p>
-                                <p className="text-sm font-semibold text-green-600 mt-1">₦{property.rent.toLocaleString()}/month</p>
-                                <Link href={`/property/${property.id}`} passHref>
-                                    <a className="text-xs text-blue-500 hover:underline mt-2 block text-center">View Details</a>
-                                </Link>
-                            </div>
+                            <Link href={`/property/${property.id}`}>
+                                <img src={property.image_url || '/placeholder-property-v2.jpg'} alt={property.title} className="h-24 w-full object-cover rounded-t-md" />
+                                <div className="p-2">
+                                    <h3 className="font-bold text-sm truncate">{property.title}</h3>
+                                    <p className="text-xs text-gray-600">{property.location}</p>
+                                    <p className="text-sm font-semibold text-green-600 mt-1">₦{property.rent.toLocaleString()}/month</p>
+                                    <Link href={`/property/${property.id}`} passHref>
+                                        <a className="text-xs text-blue-500 hover:underline mt-2 block text-center">View Details</a>
+                                    </Link>
+                                </div>
+                            </Link>
                         </div>
                     </Popup>
                 </Marker>

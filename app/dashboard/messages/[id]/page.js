@@ -129,11 +129,13 @@ export default function ConversationPage() {
         }
     };
     
-    if (loading || !conversation) {
+    const otherUser = conversation && user
+        ? (user.id === conversation.participant.id ? conversation.owner : conversation.participant)
+        : null;
+
+    if (loading || !conversation || !otherUser) {
         return <div className="p-4">Loading...</div>;
     }
-
-    const otherUser = user.id === conversation.participant.id ? conversation.owner : conversation.participant;
 
     return (
         <div className="h-[calc(100vh-4rem)] flex flex-col max-w-4xl mx-auto">

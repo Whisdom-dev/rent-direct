@@ -197,171 +197,118 @@ export default function PropertyDetailPage() {
   }
 
   return (
-    <div className="bg-gray-50 min-h-screen">
-       <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <Link href="/" className="flex items-center">
-                <h1 className="text-2xl font-bold text-gray-900">RentDirect</h1>
-            </Link>
-            <div className="flex items-center">
-                <Link href="/properties">
-                    <Button variant="outline">All Properties</Button>
-                </Link>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="mb-8">
+        <Link href="/properties" className="text-blue-500 hover:underline">
+          &larr; Back to Properties
+        </Link>
+      </div>
+
+      <div className="relative h-[300px] sm:h-[400px] lg:h-[500px] w-full overflow-hidden rounded-lg mb-8">
+        <img
+          src={property.image_url || '/placeholder-property-v2.jpg'}
+          alt={property.title}
+          className="w-full h-full object-cover"
+          onError={(e) => { e.currentTarget.src = '/placeholder-property-v2.jpg'; }}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2">
+          <div className="bg-white shadow-md rounded-lg p-6">
+            <div className="flex justify-between items-start">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">{property.title}</h1>
+                <p className="mt-2 flex items-center text-gray-600">
+                  <MapPin className="h-5 w-5 mr-2" /> {property.location}
+                </p>
+              </div>
+              <Badge variant="secondary" className="text-lg">
+                ₦{property.rent.toLocaleString()}/year
+              </Badge>
+            </div>
+            
+            <div className="mt-6 border-t pt-6">
+              <h2 className="text-xl font-semibold text-gray-800 mb-4">Description</h2>
+              <p className="text-gray-700 whitespace-pre-wrap">{property.description}</p>
+            </div>
+
+            <div className="mt-6 border-t pt-6">
+              <h2 className="text-xl font-semibold text-gray-800 mb-4">Details</h2>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex items-center">
+                  <Bed className="h-5 w-5 mr-2 text-gray-500" />
+                  <span>{property.bedrooms} Bedrooms</span>
+                </div>
+                <div className="flex items-center">
+                  <Bath className="h-5 w-5 mr-2 text-gray-500" />
+                  <span>{property.bathrooms} Bathrooms</span>
+                </div>
+                <div className="flex items-center">
+                  <ShieldCheck className="h-5 w-5 mr-2 text-gray-500" />
+                  <span>{property.property_type}</span>
+                </div>
+                <div className="flex items-center">
+                  <Calendar className="h-5 w-5 mr-2 text-gray-500" />
+                  <span>Available: {property.available ? 'Now' : 'No'}</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      </header>
-      <main className="max-w-5xl mx-auto py-8 px-4">
-        <div className="grid md:grid-cols-3 gap-8">
-            <div className="md:col-span-2">
-                <Card>
-                    <CardHeader>
-                        <img 
-                            src={property.image_url} 
-                            alt={property.title}
-                            className="w-full h-96 object-cover rounded-lg mb-4 bg-gray-100"
-                            onError={(e) => { e.currentTarget.src = '/placeholder.svg'; }}
-                        />
-                        <a href={property.image_url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 underline break-all">
-                          Debug: Click to open image in new tab
-                        </a>
-                        <div className="flex justify-between items-start mt-4">
-                            <div>
-                                <CardTitle className="text-3xl font-bold">{property.title}</CardTitle>
-                                <CardDescription className="flex items-center text-lg text-gray-600 mt-2">
-                                    <MapPin className="h-5 w-5 mr-2" />
-                                    {property.location}
-                                </CardDescription>
-                            </div>
-                            <Badge className={`text-md ${property.available ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                                {property.available ? 'Available' : 'Rented'}
-                            </Badge>
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="flex items-center space-x-6 border-y py-4 my-4">
-                            <div className="flex items-center text-gray-700">
-                                <Bed className="h-6 w-6 mr-2 text-primary" />
-                                <span className="font-semibold">{property.bedrooms} Bedrooms</span>
-                            </div>
-                            <div className="flex items-center text-gray-700">
-                                <Bath className="h-6 w-6 mr-2 text-primary" />
-                                <span className="font-semibold">{property.bathrooms} Bathrooms</span>
-                            </div>
-                        </div>
-                        <h3 className="text-xl font-semibold mb-2">Description</h3>
-                        <p className="text-gray-700 whitespace-pre-wrap">{property.description}</p>
-                    </CardContent>
-                </Card>
 
-                {/* Reviews Section */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="text-2xl">Reviews for {owner?.name}</CardTitle>
-                        {owner && owner.review_count > 0 && (
-                             <div className="flex items-center gap-2 mt-2">
-                                <StarRating rating={owner.average_rating} />
-                                <span className="text-gray-600">
-                                    {owner.average_rating.toFixed(1)} ({owner.review_count} reviews)
-                                </span>
-                            </div>
-                        )}
-                    </CardHeader>
-                    <CardContent className="space-y-6">
-                        {/* Leave a review form */}
-                        {currentUser && currentUser.id !== owner?.id && (
-                            <div className="border-t pt-6">
-                                <h3 className="text-lg font-semibold mb-4">Leave a Review</h3>
-                                <LeaveReviewForm
-                                    propertyId={property.id}
-                                    landlordId={owner.id}
-                                    reviewerId={currentUser.id}
-                                    onReviewSubmitted={fetchPropertyAndReviews}
-                                />
-                            </div>
-                        )}
+        <div className="lg:col-span-1 space-y-6">
+          {owner && (
+            <Card>
+              <CardHeader className="flex flex-row items-center space-x-4">
+                <Avatar className="h-16 w-16">
+                  <AvatarImage src={owner.avatar_url || '/placeholder-user.png'} alt={owner.name} />
+                  <AvatarFallback>{owner.name?.charAt(0)}</AvatarFallback>
+                </Avatar>
+                <div>
+                  <CardTitle>{owner.name}</CardTitle>
+                   {owner.review_count > 0 && (
+                      <div className="flex items-center gap-1 text-sm text-gray-600 mt-1">
+                          <StarRating rating={owner.average_rating} size={16} />
+                          <span className="ml-1">{owner.average_rating.toFixed(1)} ({owner.review_count} reviews)</span>
+                      </div>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent>
+                <Button className="w-full" onClick={handleContactOwner}>
+                  <MessageSquare className="h-4 w-4 mr-2"/> Contact Landlord
+                </Button>
+              </CardContent>
+            </Card>
+          )}
 
-                        {/* Existing Reviews */}
-                        <div className="space-y-4">
-                            {reviews.length > 0 ? (
-                                reviews.map(review => (
-                                    <div key={review.id} className="flex items-start space-x-4 border-t pt-4">
-                                        <Avatar>
-                                            <AvatarImage src={review.reviewer.avatar_url} />
-                                            <AvatarFallback>{review.reviewer.name?.charAt(0)}</AvatarFallback>
-                                        </Avatar>
-                                        <div className="flex-1">
-                                            <div className="flex justify-between items-center">
-                                                <span className="font-semibold">{review.reviewer.name}</span>
-                                                <span className="text-xs text-gray-500">{new Date(review.created_at).toLocaleDateString()}</span>
-                                            </div>
-                                            <StarRating rating={review.rating} size={14} className="my-1" />
-                                            <p className="text-gray-700">{review.comment}</p>
-                                        </div>
-                                    </div>
-                                ))
-                            ) : (
-                                <p className="text-gray-500 text-center py-4">This landlord has no reviews yet.</p>
-                            )}
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
-
-            <div className="md:col-span-1 space-y-6">
-                 <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center justify-between text-2xl">
-                            Rent
-                            <span className="flex items-center font-bold text-green-600">
-                                ₦{property.rent}
-                                <span className="text-lg font-normal text-gray-500">/month</span>
-                            </span>
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        {owner ? (
-                            <div className="flex items-center space-x-4">
-                                <Avatar>
-                                    <AvatarImage src={owner.avatar_url} alt={owner.name} />
-                                    <AvatarFallback>{owner.name?.charAt(0)}</AvatarFallback>
-                                </Avatar>
-                                <div>
-                                    <p className="font-bold text-lg">{owner.name}</p>
-                                    {owner.review_count > 0 && (
-                                        <div className="flex items-center gap-1 text-sm text-gray-600">
-                                            <StarRating rating={owner.average_rating} size={14} />
-                                            <span>{owner.average_rating.toFixed(1)} ({owner.review_count})</span>
-                                        </div>
-                                    )}
+          <Card>
+            <CardHeader>
+              <CardTitle>Reviews</CardTitle>
+            </CardHeader>
+            <CardContent>
+                {reviews.length > 0 ? (
+                    <div className="space-y-4">
+                        {reviews.slice(0, 3).map(review => ( // Show first 3 reviews
+                            <div key={review.id} className="border-b pb-2 last:border-b-0">
+                                <div className="flex items-center mb-1">
+                                    <StarRating rating={review.rating} size={14} />
+                                    <p className="ml-2 font-semibold text-sm">{review.reviewer.name}</p>
                                 </div>
+                                <p className="text-gray-600 text-sm">{review.comment}</p>
                             </div>
-                        ) : (
-                            <div className="text-gray-500">Owner information not available.</div>
-                        )}
-                        <Button className="w-full mt-6" onClick={handleContactOwner}>
-                            <MessageSquare className="h-5 w-5 mr-2" />
-                            Contact Landlord
-                        </Button>
-                    </CardContent>
-                </Card>
-
-                 <Card>
-                     <CardHeader>
-                        <CardTitle>Safety Tips</CardTitle>
-                     </CardHeader>
-                     <CardContent>
-                        <ul className="list-disc list-inside space-y-1 text-gray-700">
-                           <li>Check property documents</li>
-                           <li>Verify owner's identity</li>
-                           <li>Never pay in cash</li>
-                        </ul>
-                     </CardContent>
-                 </Card>
-            </div>
+                        ))}
+                    </div>
+                ) : <p className="text-sm text-gray-500">No reviews yet.</p>
+                }
+                 <div className="mt-4 pt-4 border-t">
+                    <LeaveReviewForm landlordId={property.landlord_id} propertyId={property.id} onReviewSubmitted={fetchPropertyAndReviews} />
+                </div>
+            </CardContent>
+          </Card>
         </div>
-      </main>
+      </div>
     </div>
   );
 } 

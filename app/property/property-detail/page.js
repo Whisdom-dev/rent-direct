@@ -160,11 +160,13 @@ export default function PropertyDetailPage() {
             <div className="md:col-span-2">
                 <Card>
                     <CardHeader>
-                        <img 
-                            src={property.image_url || '/placeholder.svg'} 
-                            alt={property.title}
-                            className="w-full h-96 object-cover rounded-lg mb-4"
-                        />
+                        <div className="relative w-full h-96 rounded-lg overflow-hidden shadow-lg">
+                            <img 
+                                src={property.image_url || '/placeholder-property-v2.jpg'} 
+                                alt={property.title}
+                                className="w-full h-full object-cover"
+                            />
+                        </div>
                         <div className="flex justify-between items-start">
                             <div>
                                 <CardTitle className="text-3xl font-bold">{property.title}</CardTitle>
@@ -217,10 +219,12 @@ export default function PropertyDetailPage() {
                 {owner && (
                     <Card>
                         <CardHeader className="flex flex-row items-center gap-4">
-                            <img src={owner.avatar_url || '/placeholder-user.jpg'} alt={owner.name} className="w-16 h-16 rounded-full"/>
-                            <div>
-                                <CardDescription>Property Owner</CardDescription>
-                                <CardTitle className="text-xl">{owner.name}</CardTitle>
+                            <div className="flex items-center space-x-4">
+                                <img src={owner.avatar_url || '/placeholder-user.png'} alt={owner.name} className="w-16 h-16 rounded-full"/>
+                                <div>
+                                    <CardDescription>Property Owner</CardDescription>
+                                    <CardTitle className="text-xl">{owner.name}</CardTitle>
+                                </div>
                             </div>
                         </CardHeader>
                     </Card>

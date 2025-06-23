@@ -21,6 +21,7 @@ import { useDebounce } from "@/hooks/use-debounce"
 export default function ListPropertyPage() {
   const [user, setUser] = useState(null)
   const [userProfile, setUserProfile] = useState(null)
+  const [isAdmin, setIsAdmin] = useState(false)
   const [loading, setLoading] = useState(false)
   const [imageFile, setImageFile] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -57,6 +58,13 @@ export default function ListPropertyPage() {
           .single()
         
         setUserProfile(profileData)
+        // Fetch admin status
+        const { data: adminData, error: adminError } = await supabase
+          .from("admin_users")
+          .select("id")
+          .eq("id", user.id)
+          .single()
+        if (adminData) setIsAdmin(true)
       }
     checkUser()
   }, [])
@@ -322,7 +330,7 @@ export default function ListPropertyPage() {
   }
 
   // Show verification required message for unverified landlords
-  if (!canListProperties()) {
+  if (!canListProperties() && !isAdmin) {
     return (
       <div className="min-h-screen bg-gray-50">
         <header className="bg-white shadow-sm border-b">

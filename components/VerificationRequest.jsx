@@ -14,6 +14,9 @@ import { Badge } from "@/components/ui/badge"
 import { CheckCircle, AlertCircle, Clock, Upload } from "lucide-react"
 
 export default function VerificationRequest({ user, onVerificationUpdate }) {
+  // Prevent admins from seeing this component
+  if (!user || user?.isAdmin) return null;
+
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState("")
   const [requestType, setRequestType] = useState("basic")
@@ -119,7 +122,7 @@ export default function VerificationRequest({ user, onVerificationUpdate }) {
   }
 
   const getVerificationStatus = () => {
-    if (!user.verification_status || user.verification_status === 'unverified') {
+    if (!user || !user.verification_status || user.verification_status === 'unverified') {
       return {
         status: 'unverified',
         label: 'Unverified',

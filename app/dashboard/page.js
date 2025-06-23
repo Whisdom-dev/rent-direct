@@ -217,7 +217,7 @@ export default function DashboardPage() {
                 <Badge variant="outline">
                   {userType === "landlord" ? "Landlord" : "Tenant"}
                 </Badge>
-                {userType === "landlord" && (
+                {userType === "landlord" && !isAdmin && (
                   <Badge variant={verificationInfo.color} className="flex items-center gap-1">
                     <StatusIcon className="h-3 w-3" />
                     {verificationInfo.label}
@@ -304,7 +304,7 @@ export default function DashboardPage() {
                   </Link>
                 </CardContent>
               </Card>
-            ) : userType === "landlord" && (
+            ) : userType === "landlord" && !isAdmin && (
               <>
                 {verificationInfo.status === 'unverified' && (
                   <Card>
@@ -319,7 +319,7 @@ export default function DashboardPage() {
                     </CardHeader>
                     <CardContent>
                       <VerificationRequest 
-                        user={userProfile} 
+                        user={{...userProfile, isAdmin}}
                         onVerificationUpdate={() => fetchUserData(user)}
                       />
                     </CardContent>
@@ -393,7 +393,7 @@ export default function DashboardPage() {
                     <div className="space-y-4">
                       <p className="text-sm text-gray-600">You need to verify your account to list properties</p>
                       <VerificationRequest 
-                        user={userProfile} 
+                        user={{...userProfile, isAdmin}}
                         onVerificationUpdate={() => fetchUserData(user)}
                       />
                     </div>
@@ -409,16 +409,13 @@ export default function DashboardPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {properties.map((property) => (
                   <Card key={property.id}>
-                    <div className="relative">
+                    <Link href={`/property/${property.id}`} className="block">
                       <img
-                        src={property.image_url || "/placeholder.svg?height=200&width=300"}
+                        src={property.image_url || "/placeholder-property-v2.jpg"}
                         alt={property.title}
                         className="w-full h-48 object-cover rounded-t-lg"
                       />
-                      <Badge className={`absolute top-2 right-2 ${property.available ? "bg-green-500" : "bg-red-500"}`}>
-                        {property.available ? "Available" : "Rented"}
-                      </Badge>
-                    </div>
+                    </Link>
                     <CardHeader className="pb-2">
                       <CardTitle className="text-lg">{property.title}</CardTitle>
                       <CardDescription className="flex items-center text-gray-600">

@@ -99,16 +99,12 @@ export default function AdminVerificationPage() {
 
   const handleApprove = async (requestId, requestUserId, requestType) => {
     setProcessing(true);
-
     const originalRequests = [...verificationRequests];
-
-    // Optimistically update the UI to move the request to the 'approved' status
     setVerificationRequests(prevRequests =>
-        prevRequests.map(req =>
-            req.id === requestId ? { ...req, status: 'approved' } : req
-        )
+      prevRequests.map(req =>
+        req.id === requestId ? { ...req, status: 'approved' } : req
+      )
     );
-
     try {
       const { error: requestError } = await supabase
         .from('verification_requests')
@@ -119,7 +115,6 @@ export default function AdminVerificationPage() {
         })
         .eq('id', requestId)
       if (requestError) throw requestError
-      
       const verificationStatus = requestType === 'basic' ? 'basic_verified' : 'fully_verified'
       const { error: userError } = await supabase
         .from('users')
@@ -129,20 +124,19 @@ export default function AdminVerificationPage() {
         })
         .eq('id', requestUserId)
       if (userError) throw userError
-
-      // Send a notification to the user
-      await supabase.rpc('create_notification_for_user', {
+      // Try notification, but do not rollback if it fails
+      const { error: notifError } = await supabase.rpc('create_notification_for_user', {
         target_user_id: requestUserId,
         message_text: `Congratulations! Your ${requestType} verification request has been approved. You can now start listing properties.`,
-        notification_type: 'verification_approved'
-      })
-
-      // The UI is already optimistically updated. No immediate refetch is needed.
-      // fetchVerificationRequests();
+        notification_type: 'verification_approved',
+        url: null
+      });
+      if (notifError) {
+        console.error('Notification error:', notifError);
+      }
     } catch (error) {
       console.error('Error approving verification:', error)
       alert('Error approving verification request')
-      // Rollback on error
       setVerificationRequests(originalRequests);
     } finally {
       setProcessing(false)
@@ -155,17 +149,13 @@ export default function AdminVerificationPage() {
       return
     }
     setProcessing(true);
-    setSelectedRequest(null); // Close the dialog
-
+    setSelectedRequest(null);
     const originalRequests = [...verificationRequests];
-
-    // Optimistically update the UI to move the request to the 'rejected' status
     setVerificationRequests(prevRequests =>
-        prevRequests.map(req =>
-            req.id === requestId ? { ...req, status: 'rejected', rejection_reason: rejectionReason } : req
-        )
+      prevRequests.map(req =>
+        req.id === requestId ? { ...req, status: 'rejected', rejection_reason: rejectionReason } : req
+      )
     );
-
     try {
       const { error } = await supabase
         .from('verification_requests')
@@ -177,17 +167,17 @@ export default function AdminVerificationPage() {
         })
         .eq('id', requestId)
       if (error) throw error
-
-      // Send a notification to the user
-      await supabase.rpc('create_notification_for_user', {
+      // Try notification, but do not rollback if it fails
+      const { error: notifError } = await supabase.rpc('create_notification_for_user', {
         target_user_id: requestUserId,
         message_text: `Your verification request was rejected. Reason: ${rejectionReason}`,
-        notification_type: 'verification_rejected'
-      })
-
+        notification_type: 'verification_rejected',
+        url: null
+      });
+      if (notifError) {
+        console.error('Notification error:', notifError);
+      }
       setRejectionReason("")
-      // The UI is already optimistically updated. No immediate refetch is needed.
-      // await fetchVerificationRequests();
     } catch (error) {
       console.error('Error rejecting verification:', error)
       alert('Error rejecting verification request')
