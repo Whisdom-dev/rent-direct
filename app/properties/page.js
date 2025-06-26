@@ -14,7 +14,9 @@ import { MapPin, Bed, Bath, Search, SlidersHorizontal, List, Map } from "lucide-
 import Link from "next/link"
 import { useDebounce } from "@/hooks/use-debounce"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
-import PropertiesMap from "@/components/PropertiesMap"
+import dynamic from "next/dynamic"
+
+const PropertiesMap = dynamic(() => import("@/components/PropertiesMap"), { ssr: false })
 
 export default function PropertiesPage() {
   const [properties, setProperties] = useState([])

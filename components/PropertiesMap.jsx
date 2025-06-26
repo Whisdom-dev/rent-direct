@@ -1,26 +1,27 @@
 "use client"
 
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
-import 'leaflet/dist/leaflet.css'
-import L from 'leaflet'
 import Link from 'next/link'
 
-// This is a common fix for a bug in react-leaflet where the default marker icons don't show up.
-// It explicitly tells Leaflet where to find the icon image files.
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-    iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-    iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png'
-});
-
 const PropertiesMap = ({ properties }) => {
+    // Only import react-leaflet and leaflet in the browser
+    if (typeof window === 'undefined') {
+        return null;
+    }
+    const { MapContainer, TileLayer, Marker, Popup } = require('react-leaflet');
+    const L = require('leaflet');
+    require('leaflet/dist/leaflet.css');
+
+    // This is a common fix for a bug in react-leaflet where the default marker icons don't show up.
+    // It explicitly tells Leaflet where to find the icon image files.
+    delete L.Icon.Default.prototype._getIconUrl;
+    L.Icon.Default.mergeOptions({
+        iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+        iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+        shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png'
+    });
+
     // Filter out properties that don't have valid coordinates
     const validProperties = properties.filter(p => p.latitude && p.longitude);
-
-    if (typeof window === 'undefined') {
-        return null; // Don't render on the server
-    }
 
     // Set a default center for the map. If there are properties, center on the first one.
     const mapCenter = validProperties.length > 0 
