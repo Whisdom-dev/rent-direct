@@ -5,7 +5,7 @@ import { useDropzone } from 'react-dropzone';
 import { UploadCloud, File as FileIcon, Loader2 } from 'lucide-react';
 import { Button } from './button';
 
-export function FileUpload({ onUpload, isUploading }) {
+export function FileUpload({ onFileSelect, isUploading }) {
   const [preview, setPreview] = useState(null);
 
   const onDrop = (acceptedFiles) => {
@@ -16,7 +16,7 @@ export function FileUpload({ onUpload, isUploading }) {
         setPreview(reader.result);
       };
       reader.readAsDataURL(file);
-      onUpload(file);
+      onFileSelect(file);
     }
   };
 

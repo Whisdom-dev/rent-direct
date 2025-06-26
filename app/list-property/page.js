@@ -199,7 +199,9 @@ export default function ListPropertyPage() {
         image_url: imageUrl,
       };
 
-      console.log("Attempting to create property with this data:", propertyDataToInsert);
+      // Add these lines for debugging
+      console.log("User ID:", user?.id);
+      console.log("Property Data:", propertyDataToInsert);
 
       const { data, error } = await supabase.from("properties").insert([propertyDataToInsert]).select().single();
 

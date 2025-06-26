@@ -1,5 +1,5 @@
 import "./globals.css"
-import FooterWrapper from "@/components/FooterWrapper"
+import Footer from "@/components/Footer"
 
 export const metadata = {
   title: "RentDirect - Connect Landlords & Tenants Directly",
@@ -23,7 +23,7 @@ export default function RootLayout({ children }) {
       <head />
       <body>
         {children}
-        <FooterWrapper />
+        <Footer />
       </body>
     </html>
   )
