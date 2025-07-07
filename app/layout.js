@@ -4,7 +4,6 @@ import Footer from "@/components/Footer"
 export const metadata = {
   title: "RentDirect - Connect Landlords & Tenants Directly",
   description: "Skip the agents and connect directly with landlords and tenants for rental properties.",
-  generator: 'v0.dev',
 }
 
 export function generateViewport() {
