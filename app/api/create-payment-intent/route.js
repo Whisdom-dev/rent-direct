@@ -1,10 +1,11 @@
-import stripe from '@/lib/stripe';
+import getStripe from '@/lib/stripe';
 import { NextResponse } from 'next/server';
 
 export async function POST(request) {
   console.log('=== PAYMENT INTENT API ROUTE CALLED ===');
   
   try {
+    const stripe = getStripe();
     console.log('Payment intent API route called');
     const body = await request.json();
     console.log('Request body:', body);

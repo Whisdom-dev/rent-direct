@@ -1,0 +1,28 @@
+[build]
+  command = "pnpm build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "18"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+# Environment variables that should be available during build
+[context.production.environment]
+  NEXT_PUBLIC_SUPABASE_URL = ""
+  NEXT_PUBLIC_SUPABASE_ANON_KEY = ""
+  STRIPE_SECRET_KEY = ""
+  STRIPE_WEBHOOK_SECRET = ""
+  SUPABASE_SERVICE_ROLE_KEY = ""
+  NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY = ""
+  NEXT_PUBLIC_BASE_URL = ""
+
+[context.deploy-preview.environment]
+  NEXT_PUBLIC_SUPABASE_URL = ""
+  NEXT_PUBLIC_SUPABASE_ANON_KEY = ""
+  STRIPE_SECRET_KEY = ""
+  STRIPE_WEBHOOK_SECRET = ""
+  SUPABASE_SERVICE_ROLE_KEY = ""
+  NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY = ""
+  NEXT_PUBLIC_BASE_URL = "" 

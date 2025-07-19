@@ -1,4 +1,4 @@
-import stripe from '@/lib/stripe';
+import getStripe from '@/lib/stripe';
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 
@@ -12,6 +12,7 @@ export async function POST(request) {
   );
   
   try {
+    const stripe = getStripe();
     console.log('Deposit to wallet API route called');
     const body = await request.json();
     console.log('Request body:', body);
