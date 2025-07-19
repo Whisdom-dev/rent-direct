@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { Plus, MapPin, Bed, Bath, Eye, Bell, Shield, AlertCircle, CheckCircle, Clock } from "lucide-react"
+import { Plus, MapPin, Bed, Bath, Eye, Bell, Shield, AlertCircle, CheckCircle, Clock, Wallet } from "lucide-react"
 import VerificationRequest from "@/components/VerificationRequest"
 
 export default function DashboardPage() {
@@ -229,6 +229,12 @@ export default function DashboardPage() {
               <span className="hidden sm:inline text-sm text-gray-600">
                 Welcome, {user?.user_metadata?.full_name || user?.email}
               </span>
+              <Link href="/dashboard/wallet">
+                <Button variant="outline" size="sm">
+                  <Wallet className="h-4 w-4 mr-2" />
+                  Wallet
+                </Button>
+              </Link>
               {isAdmin && (
                 <Link href="/admin/verification">
                   <Button size="sm">Admin Panel</Button>

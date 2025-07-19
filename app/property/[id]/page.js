@@ -11,6 +11,8 @@ import Link from 'next/link';
 import StarRating from '@/components/StarRating';
 import LeaveReviewForm from '@/components/LeaveReviewForm';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { toast } from "@/hooks/use-toast"
+import PaymentModal from '@/components/PaymentModal';
 
 export default function PropertyDetailPage() {
   const router = useRouter();
@@ -22,6 +24,7 @@ export default function PropertyDetailPage() {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
+  const [paying, setPaying] = useState(false);
 
   const fetchPropertyAndReviews = useCallback(async () => {
     if (!id) return;
@@ -172,6 +175,11 @@ export default function PropertyDetailPage() {
     }
   };
 
+  const handlePayRent = async () => {
+    // This function is no longer needed as PaymentModal handles everything
+    console.log('Payment modal will handle the payment flow');
+  };
+
   if (loading) {
     return (
         <div className="max-w-4xl mx-auto p-4 animate-pulse">
@@ -307,6 +315,18 @@ export default function PropertyDetailPage() {
                 </div>
             </CardContent>
           </Card>
+          {currentUser && currentUser.id !== property.landlord_id && (
+            <PaymentModal 
+              propertyId={property.id}
+              amount={property.rent}
+              email={currentUser.email}
+              userId={currentUser.id}
+            >
+              <Button className="mt-4 w-full">
+                Pay Rent
+              </Button>
+            </PaymentModal>
+          )}
         </div>
       </div>
     </div>
