@@ -6,13 +6,16 @@ import { supabase } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Bed, Bath, DollarSign, User, Calendar, ShieldCheck, MessageSquare, Star } from 'lucide-react';
+import { MapPin, Bed, Bath, DollarSign, User, Calendar, ShieldCheck, MessageSquare, Star, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import StarRating from '@/components/StarRating';
 import LeaveReviewForm from '@/components/LeaveReviewForm';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { toast } from "@/hooks/use-toast"
+import { notify } from "@/lib/notifications"
 import PaymentModal from '@/components/PaymentModal';
+import PropertyImageCarousel from '@/components/PropertyImageCarousel'
+import { PropertyDetailSkeleton } from '@/components/ui/skeletons'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 
 export default function PropertyDetailPage() {
   const router = useRouter();
@@ -89,13 +92,13 @@ export default function PropertyDetailPage() {
         return;
     }
     if(currentUser.id === property.landlord_id) {
-        alert("You cannot start a conversation with yourself.");
+        notify.warning("Action Not Allowed", "You cannot start a conversation with yourself.");
         return;
     }
 
     if (!property.landlord_id) {
         console.error("This property does not have an owner associated with it.");
-        alert("Cannot start a conversation: This property has no owner.");
+        notify.error("Error", "Cannot start a conversation: This property has no owner.");
         return;
     }
 
@@ -171,7 +174,7 @@ export default function PropertyDetailPage() {
         if (error.hint) {
             console.error('Error hint:', error.hint);
         }
-        alert('There was an error starting the conversation. Please try again.');
+        notify.error('Error', 'There was an error starting the conversation. Please try again.');
     }
   };
 
@@ -182,13 +185,9 @@ export default function PropertyDetailPage() {
 
   if (loading) {
     return (
-        <div className="max-w-4xl mx-auto p-4 animate-pulse">
-            <div className="h-96 bg-gray-200 rounded-lg mb-6"></div>
-            <div className="h-8 bg-gray-200 rounded w-3/4 mb-4"></div>
-            <div className="h-6 bg-gray-200 rounded w-1/2 mb-8"></div>
-            <div className="h-20 bg-gray-200 rounded mb-6"></div>
-            <div className="h-40 bg-gray-200 rounded"></div>
-        </div>
+      <div className="max-w-4xl mx-auto p-4">
+        <PropertyDetailSkeleton />
+      </div>
     );
   }
 
@@ -204,21 +203,31 @@ export default function PropertyDetailPage() {
     );
   }
 
+  // Custom error fallback for property detail page
+  const PropertyErrorFallback = ({ error, reset }) => (
+    <div className="max-w-4xl mx-auto p-4">
+      <div className="bg-white shadow-md rounded-lg p-6 text-center">
+        <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+        <h2 className="text-2xl font-bold mb-4">Something went wrong</h2>
+        <p className="text-gray-600 mb-6">{error.message || "We couldn't load this property. Please try again."}</p>
+        <div className="flex justify-center gap-4">
+          <Button onClick={reset}>Try Again</Button>
+          <Link href="/properties">
+            <Button variant="outline">Back to Properties</Button>
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <ErrorBoundary fallback={PropertyErrorFallback}>
+      <div className="max-w-4xl mx-auto p-4">
+      <PropertyImageCarousel images={property.image_urls || (property.image_url ? [property.image_url] : ["/placeholder-property-v2.jpg"])} />
       <div className="mb-8">
         <Link href="/properties" className="text-blue-500 hover:underline">
           &larr; Back to Properties
         </Link>
-      </div>
-
-      <div className="relative h-[300px] sm:h-[400px] lg:h-[500px] w-full overflow-hidden rounded-lg mb-8">
-        <img
-          src={property.image_url || '/placeholder-property-v2.jpg'}
-          alt={property.title}
-          className="w-full h-full object-cover"
-          onError={(e) => { e.currentTarget.src = '/placeholder-property-v2.jpg'; }}
-        />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -329,6 +338,7 @@ export default function PropertyDetailPage() {
           )}
         </div>
       </div>
-    </div>
+      </div>
+    </ErrorBoundary>
   );
 } 

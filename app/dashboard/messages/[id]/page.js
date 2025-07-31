@@ -7,8 +7,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { ArrowLeft, Send } from 'lucide-react';
+import { ArrowLeft, Send, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
+import { filterMessageContent, shouldBlockMessage } from '@/lib/message-filter';
+import { notify } from '@/lib/notifications';
 
 export default function ConversationPage() {
     const router = useRouter();
@@ -98,15 +100,35 @@ export default function ConversationPage() {
         e.preventDefault();
         if (!newMessage.trim() || !user || !conversation) return;
 
+        // Check if message should be blocked entirely
+        if (shouldBlockMessage(newMessage)) {
+            notify.error(
+                "Message Blocked",
+                "Your message appears to contain multiple instances of contact information, which is not allowed to protect all users."
+            );
+            return;
+        }
+
+        // Filter the message content
+        const { filteredContent, wasFiltered } = filterMessageContent(newMessage);
+        
+        // Notify user if their message was filtered
+        if (wasFiltered) {
+            notify.warning(
+                "Message Modified",
+                "We've removed what appears to be contact information from your message. All communication should remain on the platform."
+            );
+        }
+
         const receiverId = user.id === conversation.user1_id ? conversation.user2_id : conversation.user1_id;
 
-        // Optimistic UI update
+        // Optimistic UI update with filtered content
         const optimisticMessage = {
             id: Math.random().toString(36).substring(2, 9), // temp ID
             conversation_id: conversation.id,
             sender_id: user.id,
             receiver_id: receiverId,
-            content: newMessage,
+            content: filteredContent,
             created_at: new Date().toISOString(),
         };
         setMessages(prevMessages => [...prevMessages, optimisticMessage]);
@@ -118,14 +140,14 @@ export default function ConversationPage() {
                 conversation_id: conversation.id,
                 sender_id: user.id,
                 receiver_id: receiverId,
-                content: newMessage,
+                content: filteredContent,
             });
 
         if (error) {
             console.error('Error sending message:', error);
             // Revert optimistic update on error
             setMessages(prevMessages => prevMessages.filter(m => m.id !== optimisticMessage.id));
-            alert("Failed to send message. Please try again.");
+            notify.error("Error", "Failed to send message. Please try again.");
         }
     };
     
@@ -170,8 +192,12 @@ export default function ConversationPage() {
                 </div>
             </main>
             <footer className="p-4 border-t bg-white">
+                <div className="mb-2 text-xs text-amber-600 flex items-center">
+                    <AlertTriangle className="h-3 w-3 mr-1" />
+                    <span>Sharing contact information is not allowed and will be filtered.</span>
+                </div>
                 <form onSubmit={handleSendMessage} className="flex items-center gap-2">
-                    <Input 
+                    <Input
                         value={newMessage}
                         onChange={e => setNewMessage(e.target.value)}
                         placeholder="Type your message..."

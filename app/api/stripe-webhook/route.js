@@ -54,14 +54,28 @@ async function handlePaymentSucceeded(paymentIntent) {
   console.log('Payment succeeded:', paymentIntent.id);
   
   try {
-    const { propertyId, userId, type, testAmount } = paymentIntent.metadata;
+    const { propertyId, userId, tenantId, landlordId, type, testAmount } = paymentIntent.metadata;
+    const amount = parseFloat(testAmount || paymentIntent.amount / 100);
+    
+    // Update transaction status regardless of type
+    const { error: transactionError } = await supabase
+      .from('transactions')
+      .update({
+        status: 'completed',
+        updated_at: new Date().toISOString()
+      })
+      .eq('stripe_payment_intent_id', paymentIntent.id);
+
+    if (transactionError) {
+      console.error('Error updating transaction status:', transactionError);
+    }
     
     if (type === 'wallet_deposit' && userId) {
-      // Update user balance
+      // Update user balance for regular wallet deposit
       const { data: newBalance, error: balanceError } = await supabase
         .rpc('update_user_balance', {
           p_user_id: userId,
-          p_amount: parseFloat(testAmount || paymentIntent.amount / 100),
+          p_amount: amount,
           p_transaction_type: 'deposit'
         });
 
@@ -70,20 +84,48 @@ async function handlePaymentSucceeded(paymentIntent) {
         return;
       }
 
-      // Update transaction status
-      const { error: transactionError } = await supabase
-        .from('transactions')
-        .update({ 
-          status: 'completed',
-          updated_at: new Date().toISOString()
-        })
-        .eq('stripe_payment_intent_id', paymentIntent.id);
-
-      if (transactionError) {
-        console.error('Error updating transaction status:', transactionError);
-      }
-
       console.log('User balance updated successfully:', { userId, newBalance });
+    }
+    else if (type === 'escrow_payment' && tenantId && landlordId && propertyId) {
+      // Handle escrow payment - funds are held in escrow until tenant confirms
+      console.log('Processing escrow payment:', {
+        tenantId,
+        landlordId,
+        propertyId,
+        amount
+      });
+      
+      // Create notification for tenant
+      const { error: tenantNotificationError } = await supabase
+        .from('notifications')
+        .insert({
+          user_id: tenantId,
+          type: 'escrow_created',
+          title: 'Payment in Escrow',
+          message: `Your payment of ₦${amount.toLocaleString()} is now in escrow. Funds will be released to the landlord once you confirm you've received access to the property.`,
+          data: { propertyId, amount },
+          read: false
+        });
+
+      if (tenantNotificationError) {
+        console.error('Error creating tenant notification:', tenantNotificationError);
+      }
+      
+      // Create notification for landlord
+      const { error: landlordNotificationError } = await supabase
+        .from('notifications')
+        .insert({
+          user_id: landlordId,
+          type: 'escrow_pending',
+          title: 'Payment Received in Escrow',
+          message: `A tenant has made a payment of ₦${amount.toLocaleString()} for your property. The funds will be released to you once the tenant confirms they've received access.`,
+          data: { propertyId, amount },
+          read: false
+        });
+
+      if (landlordNotificationError) {
+        console.error('Error creating landlord notification:', landlordNotificationError);
+      }
     }
   } catch (error) {
     console.error('Error handling payment success:', error);

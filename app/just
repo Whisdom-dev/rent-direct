@@ -273,3 +273,78 @@ export default function HomePage() {
     </div>
   );
 }
+
+
+"use client";
+
+import Head from 'next/head';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
+
+export default function Home() {
+  const images = [
+    '/blueprint1.jpg',
+    '/blueprint2.jpeg',
+    '/blueprint.jpg'
+  ];
+  const [currentImage, setCurrentImage] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentImage((prev) => (prev + 1) % images.length);
+    }, 5000); // Change image every 5 seconds
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <>
+      <Head>
+        <title>CASTLE Real Estate</title>
+      </Head>
+      <main className="relative h-screen bg-blue-900 text-white overflow-hidden">
+        {/* Sliding background images */}
+        <img
+          src={images[currentImage]}
+          alt="Background"
+          className="absolute inset-0 w-full h-full object-cover opacity-80 transition-opacity duration-1000 ease-in-out"
+          key={currentImage}
+        />
+
+        {/* Content */}
+        <div className="relative z-10 flex flex-col justify-center items-center text-center h-full px-4">
+          <div className="mb-6">
+            <h1 className="text-5xl font-bold text-yellow-400 tracking-wide">CASTLE</h1>
+            <p className="text-lg">REAL ESTATE</p>
+          </div>
+
+          <h2 className="text-3xl md:text-4xl font-semibold mb-8">Real Estate Template</h2>
+
+          <div className="grid md:grid-cols-3 gap-8 text-sm max-w-4xl">
+            <div>
+              <p>9 Homepage Variations</p>
+              <p>Outstanding Code Quality</p>
+            </div>
+            <div>
+              <p>Creative and Elegant Design</p>
+              <p>Revolution Slider Save $14</p>
+            </div>
+            <div>
+              <p>Properties Listing with detail</p>
+              <p>Fully Responsive</p>
+            </div>
+          </div>
+
+          {/* Navigation Buttons */}
+          <div className="mt-10 flex gap-6">
+            <Link href="/mainpage" className="bg-yellow-400 text-blue-900 px-6 py-3 rounded font-semibold hover:bg-yellow-300 transition">
+              View Listings
+            </Link>
+            <Link href="/contact" className="border border-white px-6 py-3 rounded font-semibold hover:bg-white hover:text-blue-900 transition">
+              Contact Us
+            </Link>
+          </div>
+        </div>
+      </main>
+    </>
+  );
+}

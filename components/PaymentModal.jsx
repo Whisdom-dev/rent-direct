@@ -36,9 +36,9 @@ const PaymentForm = ({ propertyId, amount, email, userId, onSuccess, onClose }) 
     // Create payment intent when component mounts
     const createPaymentIntent = async () => {
       try {
-        console.log('Creating wallet deposit for:', { propertyId, amount, email, userId });
+        console.log('Creating escrow payment for:', { propertyId, amount, email, userId });
         
-        const response = await fetch('/api/deposit-to-wallet', {
+        const response = await fetch('/api/escrow-payment', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -47,16 +47,16 @@ const PaymentForm = ({ propertyId, amount, email, userId, onSuccess, onClose }) 
             propertyId,
             amount,
             email,
-            userId,
+            tenantId: userId, // Renamed to match the escrow system
           }),
         });
 
-        console.log('Wallet deposit response status:', response.status);
+        console.log('Escrow payment response status:', response.status);
         const data = await response.json();
-        console.log('Wallet deposit response data:', data);
+        console.log('Escrow payment response data:', data);
         
         if (!response.ok) {
-          throw new Error(data.error || `Failed to create wallet deposit (${response.status})`);
+          throw new Error(data.error || `Failed to create escrow payment (${response.status})`);
         }
 
         if (!data.clientSecret) {
@@ -133,8 +133,8 @@ const PaymentForm = ({ propertyId, amount, email, userId, onSuccess, onClose }) 
         });
       } else if (paymentIntent && paymentIntent.status === 'succeeded') {
         toast({
-          title: 'Deposit Successful!',
-          description: 'Your money has been added to your wallet balance.',
+          title: 'Payment Successful!',
+          description: 'Your payment is now in escrow. The funds will be released to the landlord once you confirm you have received access to the property.',
         });
         onSuccess(paymentIntent);
         onClose();
@@ -187,6 +187,11 @@ const PaymentForm = ({ propertyId, amount, email, userId, onSuccess, onClose }) 
         <p>Property ID: {propertyId}</p>
       </div>
       
+      <div className="text-sm bg-blue-50 p-3 rounded-md border border-blue-100">
+        <p className="font-medium text-blue-700">Secure Escrow Payment</p>
+        <p className="text-blue-600 mt-1">Your payment will be held in escrow until you confirm you've received access to the property. This protects both you and the landlord.</p>
+      </div>
+      
       <div className="text-xs text-gray-500 bg-gray-50 p-3 rounded-md">
         <p className="font-medium mb-1">Test Card Details:</p>
         <p>Card: 4242 4242 4242 4242</p>
@@ -234,9 +239,9 @@ const PaymentModal = ({ propertyId, amount, email, userId, children }) => {
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Pay Rent</DialogTitle>
+          <DialogTitle>Pay Rent via Escrow</DialogTitle>
           <DialogDescription>
-            Enter your card details to complete the rent payment.
+            Enter your card details to complete the rent payment. Your payment will be held in escrow until you confirm you've received access to the property.
           </DialogDescription>
         </DialogHeader>
         

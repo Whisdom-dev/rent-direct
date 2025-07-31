@@ -1,6 +1,7 @@
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { cva } from "class-variance-authority"
+import { motion } from "framer-motion"
 
 import { cn } from "@/lib/utils"
 
@@ -35,9 +36,11 @@ const buttonVariants = cva(
 
 const Button = React.forwardRef(
   ({ className, variant, size, asChild = false, ...props }, ref) => {
-    const Comp = asChild ? Slot : "button"
+    const Comp = asChild ? Slot : motion.button
     return (
       <Comp
+        whileHover={{ scale: 1.045, boxShadow: "0 4px 24px rgba(0,0,0,0.10)" }}
+        whileTap={{ scale: 0.97 }}
         className={cn(buttonVariants({ variant, size, className }))}
         ref={ref}
         {...props}

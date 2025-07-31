@@ -23,7 +23,7 @@ export default function ListPropertyPage() {
   const [userProfile, setUserProfile] = useState(null)
   const [isAdmin, setIsAdmin] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [imageFile, setImageFile] = useState(null);
+  const [imageFiles, setImageFiles] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
@@ -115,74 +115,57 @@ export default function ListPropertyPage() {
   };
 
   const handleImageUpload = async () => {
-    if (!imageFile) return null;
-    
+    if (!imageFiles.length) return [];
     setIsUploading(true);
     try {
+      const urls = [];
+      for (const imageFile of imageFiles) {
         const fileExt = imageFile.name.split('.').pop();
-        const fileName = `${Date.now()}.${fileExt}`;
+        const fileName = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
         const filePath = `property-images/${fileName}`;
-
         const { data: uploadData, error: uploadError } = await supabase.storage
-            .from('properties')
-            .upload(filePath, imageFile);
-
-        if (uploadError) {
-          throw new Error(`Supabase upload error: ${uploadError.message}`);
-        }
-
-        if (!uploadData || !uploadData.path) {
-          throw new Error("Upload succeeded but did not return a valid path.");
-        }
-
+          .from('properties')
+          .upload(filePath, imageFile);
+        if (uploadError) throw new Error(`Supabase upload error: ${uploadError.message}`);
+        if (!uploadData || !uploadData.path) throw new Error("Upload succeeded but did not return a valid path.");
         const { data: urlData } = supabase.storage
-            .from('properties')
-            .getPublicUrl(uploadData.path);
-            
-        if (!urlData || !urlData.publicUrl) {
-            throw new Error("Could not get public URL for the uploaded image.");
-        }
-
-        return urlData.publicUrl;
-
+          .from('properties')
+          .getPublicUrl(uploadData.path);
+        if (!urlData || !urlData.publicUrl) throw new Error("Could not get public URL for the uploaded image.");
+        urls.push(urlData.publicUrl);
+      }
+      return urls;
     } catch (error) {
-        console.error("A critical error occurred in handleImageUpload:", error);
-        alert(`Image upload failed: ${error.message}`);
-        return null;
+      console.error("A critical error occurred in handleImageUpload:", error);
+      alert(`Image upload failed: ${error.message}`);
+      return [];
     } finally {
-        setIsUploading(false);
+      setIsUploading(false);
     }
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!user) return;
-
     setLoading(true)
-    let imageUrl = null;
-
-    if(imageFile) {
-        imageUrl = await handleImageUpload();
-        if(!imageUrl) {
-            setLoading(false);
-            return; // Stop submission if image upload fails
-        }
+    let imageUrls = [];
+    if(imageFiles.length) {
+      imageUrls = await handleImageUpload();
+      if(!imageUrls.length) {
+        setLoading(false);
+        return; // Stop submission if image upload fails
+      }
     }
-
     try {
       const parsedRent = Number.parseInt(formData.rent, 10);
       const parsedBedrooms = Number.parseInt(formData.bedrooms, 10);
       const parsedBathrooms = Number.parseInt(formData.bathrooms, 10);
-
-      // Add validation to check for NaN, which happens if fields are empty
       if (isNaN(parsedRent) || isNaN(parsedBedrooms) || isNaN(parsedBathrooms)) {
-          console.error("Form data is invalid. One of the number fields could not be parsed.", { formData });
-          alert("Please ensure Rent, Bedrooms, and Bathrooms are valid numbers.");
-          setLoading(false);
-          return;
+        console.error("Form data is invalid. One of the number fields could not be parsed.", { formData });
+        alert("Please ensure Rent, Bedrooms, and Bathrooms are valid numbers.");
+        setLoading(false);
+        return;
       }
-
-      // Add detailed logging to see the exact data before insertion
       const propertyDataToInsert = {
         title: formData.title,
         description: formData.description,
@@ -196,7 +179,8 @@ export default function ListPropertyPage() {
         longitude: formData.longitude,
         landlord_id: user.id,
         available: true,
-        image_url: imageUrl,
+        image_url: imageUrls[0] || null, // for backward compatibility
+        image_urls: imageUrls.length ? imageUrls : null,
       };
 
       // Add these lines for debugging
@@ -509,15 +493,27 @@ export default function ListPropertyPage() {
                 </CardHeader>
                 <CardContent>
                   <div>
-                    <Label>Property Image</Label>
-                    <FileUpload
-                      onFileSelect={setImageFile}
-                      accept=".jpg,.jpeg,.png,.webp"
-                      maxSize={5 * 1024 * 1024} // 5MB
+                    <Label htmlFor="property-images">Property Images</Label>
+                    <input
+                      id="property-images"
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={e => setImageFiles(Array.from(e.target.files))}
+                      className="block w-full border border-gray-300 rounded p-2 mb-4"
+                      disabled={isUploading || loading}
                     />
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Upload a high-quality image of your property (max 5MB)
-                    </p>
+                    {/* Show previews */}
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {imageFiles.map((file, idx) => (
+                        <img
+                          key={idx}
+                          src={URL.createObjectURL(file)}
+                          alt={`Preview ${idx + 1}`}
+                          className="w-24 h-24 object-cover rounded border"
+                        />
+                      ))}
+                    </div>
                   </div>
                 </CardContent>
               </Card>
