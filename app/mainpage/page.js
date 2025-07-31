@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import HeroSection from "@/components/ui/HeroSection";
+import HeroSection from "@/components/HeroSection";
 
 import { Badge } from "@/components/ui/badge";
 import {
